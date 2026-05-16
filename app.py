@@ -6,6 +6,7 @@ import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
+app.static_folder = 'static'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
