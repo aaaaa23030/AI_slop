@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход — Kanban Event System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="auth-body">
+    <div class="auth-card">
+        <h1>🚀 Kanban Event System</h1>
+        <p class="muted">Войдите, чтобы открыть доску</p>
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            <label>Логин</label>
+            <input type="text" name="username" placeholder="admin" required>
+
+            <label>Пароль</label>
+            <input type="password" name="password" placeholder="admin123" required>
+
+            <button type="submit" class="btn-primary full">Войти</button>
+        </form>
+
+        <div class="demo-box">
+            <strong>Демо-аккаунты:</strong><br>
+            Админ: <code>admin</code> / <code>admin123</code><br>
+            Пользователь: <code>user</code> / <code>user123</code>
+        </div>
+
+        <p class="auth-link">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+    </div>
+</body>
+</html>

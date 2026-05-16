@@ -1,366 +1,745 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Моя канбан-доска</title>
+    <meta charset="UTF-8">
+    <title>Kanban Event System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>🚀 Канбан-доска</h1>
-    
-    <!-- Контейнер для уведомлений -->
     <div id="notifications"></div>
-    
-    <div class="add-form">
-    <h3>➕ Новая задача</h3>
-    <input type="text" id="titleInput" placeholder="Название задачи" style="width: 300px;">
-    <select id="priorityInput">
-        <option value="low">🟢 Низкий</option>
-        <option value="medium" selected>🟠 Средний</option>
-        <option value="high">🔴 Высокий</option>
-        <option value="critical">🟣 Критический</option>
-    </select>
-    <br>
-    <textarea id="descInput" placeholder="Описание" rows="2" style="width: 500px;"></textarea>
-    <br>
-    <input type="text" id="tagsInput" placeholder="Теги (через запятую): баг, срочно" style="width: 300px;">
-    <input type="date" id="deadlineInput" style="width: 180px;">
-    <br>
-    <button class="btn-add" onclick="addTask()">Добавить задачу</button>
-    </div>
 
-    <div class="rules-panel" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <h3>⚙️ Правила автоматизации</h3>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+    <header class="topbar">
         <div>
-            <small>Название</small><br>
-            <input type="text" id="ruleName" placeholder="Моё правило" style="width: 150px;">
+            <h1>🚀 Kanban Event System</h1>
+            <p>Real-time доска + автоматизация + очередь входящих задач</p>
         </div>
-        <div>
-            <small>Когда</small><br>
-            <select id="ruleTrigger">
-                <option value="task_created">Задача создана</option>
-                <option value="task_moved">Задача перемещена</option>
-            </select>
+        <div class="user-box">
+            <span>👤 {{ current_user.username }}</span>
+            <span class="role role-{{ current_user.role }}">{{ current_user.role }}</span>
+            <a href="{{ url_for('logout') }}">Выйти</a>
         </div>
-        <div>
-            <small>Если</small><br>
-            <select id="ruleField">
-                <option value="priority">Приоритет</option>
-                <option value="column">Колонка</option>
-                <option value="tags">Тег</option>
-            </select>
-        </div>
-        <div>
-            <small>=</small><br>
-            <input type="text" id="ruleValue" placeholder="critical" style="width: 120px;">
-        </div>
-        <div>
-            <small>То</small><br>
-            <select id="ruleAction">
-                <option value="move_column">Переместить в</option>
-                <option value="send_notification">Уведомить</option>
-            </select>
-        </div>
-        <div>
-            <small>Значение</small><br>
-            <input type="text" id="ruleActionValue" placeholder="in_progress" style="width: 130px;">
-        </div>
-        <div>
-            <br>
-            <button onclick="addRule()" style="background: #9c27b0; color: white;">+ Создать правило</button>
-        </div>
-    </div>
-    
-    <h4 style="margin-top: 20px;">📋 Активные правила:</h4>
-    <div id="rulesList" style="display: flex; flex-direction: column; gap: 8px;">
-        {% for rule in rules %}
-        <div id="rule-{{ rule.id }}" style="padding: 10px; background: #f5f5f5; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
-            <span>
-                {% if rule.enabled %}🟢{% else %}🔴{% endif %}
-                <strong>{{ rule.name }}</strong>: 
-                Когда {{ rule.trigger }} и {{ rule.condition_field }}={{ rule.condition_value }} → 
-                {{ rule.action_type }}: {{ rule.action_value }}
-            </span>
-            <div>
-                <button onclick="toggleRule({{ rule.id }})" style="font-size: 12px;">
-                    {% if rule.enabled %}Выкл{% else %}Вкл{% endif %}
-                </button>
-                <button onclick="deleteRule({{ rule.id }})" style="font-size: 12px; color: red;">Удалить</button>
+    </header>
+
+    <main class="layout">
+        <section class="left-panel">
+            <div class="panel">
+                <h3>➕ Новая задача</h3>
+                <div class="grid-form">
+                    <input type="text" id="titleInput" placeholder="Название задачи">
+                    <select id="priorityInput">
+                        <option value="low">🟢 Низкий</option>
+                        <option value="medium" selected>🟠 Средний</option>
+                        <option value="high">🔴 Высокий</option>
+                        <option value="critical">🟣 Критический</option>
+                    </select>
+                    <input type="text" id="tagsInput" placeholder="Теги: bug, urgent">
+                    <input type="date" id="deadlineInput">
+                    <select id="teamInput" onchange="refreshAssigneeSelect('teamInput', 'assigneeInput')"></select>
+                    <select id="assigneeInput"></select>
+                    <textarea id="descInput" placeholder="Описание" rows="2"></textarea>
+                </div>
+                <button class="btn-primary" onclick="addTask()">Добавить задачу</button>
             </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
 
-    <div class="board">
-        <div class="column" id="col-todo">
-            <h3>📋 To Do</h3>
-        </div>
-        <div class="column" id="col-in-progress">
-            <h3>🔄 In Progress</h3>
-        </div>
-        <div class="column" id="col-done">
-            <h3>✅ Done</h3>
+            <div class="panel">
+                <h3>🔎 Фильтры</h3>
+                <div class="filters">
+                    <input type="text" id="searchFilter" placeholder="Поиск по названию/описанию" oninput="renderBoard()">
+                    <select id="priorityFilter" onchange="renderBoard()">
+                        <option value="">Все приоритеты</option>
+                        <option value="low">Низкий</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Высокий</option>
+                        <option value="critical">Критический</option>
+                    </select>
+                    <input type="text" id="tagFilter" placeholder="Тег" oninput="renderBoard()">
+                    <select id="teamFilter" onchange="renderBoard()"></select>
+                    <select id="assigneeFilter" onchange="renderBoard()"></select>
+                    <button onclick="resetFilters()">Сбросить</button>
+                </div>
+            </div>
+
+            <div class="panel team-panel">
+                <h3>👥 Команды и назначение задач</h3>
+                <p class="muted">Можно создать команду, добавить участников и выдать роль admin/member. Админ команды может назначать задачи участникам.</p>
+                <div class="grid-form">
+                    <input type="text" id="newTeamName" placeholder="Название команды">
+                    <input type="text" id="newTeamDescription" placeholder="Описание команды">
+                </div>
+                <button class="btn-primary" onclick="addTeam()">+ Создать команду</button>
+                <div id="teamsList" class="mini-list"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title-row">
+                    <h3>📥 Входящий поток задач</h3>
+                    <button onclick="sendIncomingDemo()">Отправить в очередь</button>
+                </div>
+                <p class="muted">Имитирует API/очередь: задача валидируется, проверяется на дубли и обогащается.</p>
+                <div class="grid-form">
+                    <input type="text" id="incomingExternalId" placeholder="external_id, например CRM-42">
+                    <input type="text" id="incomingTitle" placeholder="Название входящей задачи">
+                    <input type="text" id="incomingTags" placeholder="Теги, например bug, urgent">
+                    <select id="incomingTeam" onchange="refreshAssigneeSelect('incomingTeam', 'incomingAssignee')"></select>
+                    <select id="incomingAssignee"></select>
+                    <select id="incomingPriority">
+                        <option value="">Авто-приоритет</option>
+                        <option value="low">low</option>
+                        <option value="medium">medium</option>
+                        <option value="high">high</option>
+                        <option value="critical">critical</option>
+                    </select>
+                </div>
+                <div id="incomingList" class="mini-list"></div>
+            </div>
+
+            {% if current_user.role == 'admin' %}
+            <div class="panel admin-panel">
+                <h3>🧱 Колонки</h3>
+                <div class="inline-form">
+                    <input type="text" id="newColumnName" placeholder="Например: Review">
+                    <button onclick="addColumn()">Добавить колонку</button>
+                </div>
+                <div id="columnsAdminList" class="mini-list"></div>
+            </div>
+
+            <div class="panel admin-panel">
+                <h3>⚙️ Правила автоматизации</h3>
+                <div class="rules-grid">
+                    <input type="text" id="ruleName" placeholder="Название правила">
+                    <select id="ruleTrigger">
+                        <option value="task_created">Когда задача создана</option>
+                        <option value="task_updated">Когда задача изменена</option>
+                        <option value="task_moved">Когда задача перемещена</option>
+                        <option value="incoming_task">Когда пришла из очереди</option>
+                    </select>
+                    <select id="ruleField">
+                        <option value="always">Всегда</option>
+                        <option value="priority">Приоритет</option>
+                        <option value="column">Колонка key</option>
+                        <option value="tags">Теги</option>
+                        <option value="title">Название</option>
+                        <option value="deadline">Дедлайн</option>
+                    </select>
+                    <select id="ruleOperator">
+                        <option value="equals">равно</option>
+                        <option value="contains">содержит</option>
+                        <option value="not_equals">не равно</option>
+                    </select>
+                    <input type="text" id="ruleValue" placeholder="critical / bug / overdue">
+                    <select id="ruleAction">
+                        <option value="move_column">Переместить в колонку</option>
+                        <option value="send_notification">Уведомить</option>
+                        <option value="set_priority">Изменить приоритет</option>
+                        <option value="add_tag">Добавить тег</option>
+                    </select>
+                    <input type="text" id="ruleActionValue" placeholder="in_progress / Текст / critical">
+                </div>
+                <button class="btn-purple" onclick="addRule()">+ Создать правило</button>
+                <div id="rulesList" class="mini-list"></div>
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="board-section">
+            <div class="board-actions">
+                <h2>Канбан-доска</h2>
+                <button onclick="checkDeadlines()">⏰ Проверить дедлайны</button>
+            </div>
+            <div class="board" id="board"></div>
+        </section>
+
+        <aside class="right-panel">
+            <div class="panel">
+                <h3>🧾 История событий</h3>
+                <p class="muted">Audit log: кто, что и когда сделал.</p>
+                <div id="eventsList" class="event-list"></div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="taskModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>✏️ Редактировать задачу</h3>
+                <button onclick="closeEditModal()">✕</button>
+            </div>
+            <input type="hidden" id="editTaskId">
+            <label>Название</label>
+            <input type="text" id="editTitle">
+            <label>Описание</label>
+            <textarea id="editDescription" rows="3"></textarea>
+            <label>Приоритет</label>
+            <select id="editPriority">
+                <option value="low">Низкий</option>
+                <option value="medium">Средний</option>
+                <option value="high">Высокий</option>
+                <option value="critical">Критический</option>
+            </select>
+            <label>Теги</label>
+            <input type="text" id="editTags">
+            <label>Дедлайн</label>
+            <input type="date" id="editDeadline">
+            <label>Команда</label>
+            <select id="editTeam" onchange="refreshAssigneeSelect('editTeam', 'editAssignee')"></select>
+            <label>Исполнитель</label>
+            <select id="editAssignee"></select>
+            <label>Колонка</label>
+            <select id="editColumn"></select>
+            <button class="btn-primary full" onclick="saveTaskEdit()">Сохранить</button>
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
+        let state = {{ initial_state|tojson }};
+        const IS_ADMIN = {{ 'true' if current_user.role == 'admin' else 'false' }};
+        const CURRENT_USER_ID = {{ current_user.id }};
         const socket = io();
+        const priorityNames = {
+            low: "Низкий",
+            medium: "Средний",
+            high: "Высокий",
+            critical: "Критический"
+        };
 
-        // ====== ПОЛУЧЕНИЕ УВЕДОМЛЕНИЙ ======
-        socket.on("notification", (data) => {
-            showNotification(data.message, data.type);
+        socket.on("state_changed", async () => {
+            state = await api("/api/state");
+            renderAll();
         });
+
+        // Backward compatibility with the previous version of the project.
+        socket.on("state_updated", (newState) => {
+            state = newState;
+            renderAll();
+        });
+
+        socket.on("notification", (data) => {
+            showNotification(data.message, data.type || "info");
+        });
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        async function api(url, method = "GET", body = null) {
+            const options = { method, headers: { "Content-Type": "application/json" } };
+            if (body) options.body = JSON.stringify(body);
+            const response = await fetch(url, options);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                showNotification(data.message || "Ошибка запроса", "warning");
+                throw new Error(data.message || "Ошибка запроса");
+            }
+            return data;
+        }
 
         function showNotification(message, type) {
             const container = document.getElementById("notifications");
-            
             const notif = document.createElement("div");
             notif.className = "notification notification-" + type;
-            
-            const text = document.createElement("span");
-            text.innerText = message;
-            notif.appendChild(text);
-            
-            const closeBtn = document.createElement("span");
-            closeBtn.className = "notification-close";
-            closeBtn.innerText = "✕";
-            closeBtn.onclick = () => {
-                notif.style.animation = "slideOut 0.3s ease-in";
-                setTimeout(() => notif.remove(), 300);
-            };
-            notif.appendChild(closeBtn);
-            
+            notif.innerHTML = `<span>${escapeHtml(message)}</span><button>✕</button>`;
+            notif.querySelector("button").onclick = () => removeNotification(notif);
             container.appendChild(notif);
-            
-            // Автоматически убрать через 4 секунды
-            setTimeout(() => {
-                if (notif.parentNode) {
-                    notif.style.animation = "slideOut 0.3s ease-in";
-                    setTimeout(() => notif.remove(), 300);
-                }
-            }, 4000);
+            setTimeout(() => removeNotification(notif), 4500);
         }
 
-        // ====== ОБНОВЛЕНИЕ ДОСКИ ======
-        socket.on("update_tasks", (tasks) => {
-            drawBoard(tasks);
-        });
+        function removeNotification(notif) {
+            if (!notif || !notif.parentNode) return;
+            notif.style.animation = "slideOut 0.25s ease-in";
+            setTimeout(() => notif.remove(), 250);
+        }
 
-        const priorityNames = {
-            "low": "Низкий",
-            "medium": "Средний",
-            "high": "Высокий",
-            "critical": "Критический"
-        };
+        function resetFilters() {
+            document.getElementById("searchFilter").value = "";
+            document.getElementById("priorityFilter").value = "";
+            document.getElementById("tagFilter").value = "";
+            document.getElementById("teamFilter").value = "";
+            document.getElementById("assigneeFilter").value = "";
+            renderBoard();
+        }
 
-        function drawBoard(tasks) {
-            document.getElementById("col-todo").innerHTML = "<h3>📋 To Do</h3>";
-            document.getElementById("col-in-progress").innerHTML = "<h3>🔄 In Progress</h3>";
-            document.getElementById("col-done").innerHTML = "<h3>✅ Done</h3>";
+        function getFilteredTasks() {
+            const search = document.getElementById("searchFilter").value.trim().toLowerCase();
+            const priority = document.getElementById("priorityFilter").value;
+            const tag = document.getElementById("tagFilter").value.trim().toLowerCase();
+            const teamId = document.getElementById("teamFilter").value;
+            const assigneeId = document.getElementById("assigneeFilter").value;
 
-            tasks.forEach(task => {
-                const card = document.createElement("div");
-                card.className = "card priority-" + task.priority;
-                
-                // Кнопка удаления
-                const deleteBtn = document.createElement("button");
-                deleteBtn.className = "btn-delete";
-                deleteBtn.innerHTML = "🗑️";
-                deleteBtn.title = "Удалить задачу";
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    if (confirm('Удалить задачу "' + task.title + '"?')) {
-                        deleteTask(task.id);
-                    }
-                };
-                card.appendChild(deleteBtn);
-                
-                // Заголовок
-                const header = document.createElement("div");
-                header.className = "card-header";
-                
-                const titleSpan = document.createElement("span");
-                titleSpan.className = "card-title";
-                titleSpan.innerText = task.title;
-                header.appendChild(titleSpan);
-                
-                const badge = document.createElement("span");
-                badge.className = "badge badge-" + task.priority;
-                badge.innerText = priorityNames[task.priority];
-                header.appendChild(badge);
-                
-                card.appendChild(header);
-                
-                // Описание
-                if (task.description) {
-                    const descDiv = document.createElement("div");
-                    descDiv.className = "card-desc";
-                    descDiv.innerText = task.description;
-                    card.appendChild(descDiv);
-                }
-
-                if (task.tags) {
-    const tagsDiv = document.createElement("div");
-    tagsDiv.style = "margin: 5px 0;";
-    task.tags.split(",").forEach(tag => {
-        const tagSpan = document.createElement("span");
-        tagSpan.style = "display: inline-block; background: #e0e0e0; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 5px;";
-        tagSpan.innerText = tag.trim();
-        tagsDiv.appendChild(tagSpan);
-    });
-    card.appendChild(tagsDiv);
-}
-
-if (task.deadline) {
-    const deadlineDiv = document.createElement("div");
-    deadlineDiv.style = "font-size: 12px; color: #888; margin-top: 5px;";
-    deadlineDiv.innerText = "⏰ Дедлайн: " + task.deadline;
-    card.appendChild(deadlineDiv);
-}
-                
-                // Кнопки перемещения
-                const buttonsDiv = document.createElement("div");
-                buttonsDiv.className = "card-buttons";
-                
-                if (task.column === "todo") {
-                    const btn = document.createElement("button");
-                    btn.innerText = "→ В работу";
-                    btn.onclick = () => moveTask(task.id, "in_progress");
-                    buttonsDiv.appendChild(btn);
-                }
-                else if (task.column === "in_progress") {
-                    const btnLeft = document.createElement("button");
-                    btnLeft.innerText = "← Назад";
-                    btnLeft.onclick = () => moveTask(task.id, "todo");
-                    buttonsDiv.appendChild(btnLeft);
-                    
-                    const btnRight = document.createElement("button");
-                    btnRight.innerText = "✓ Готово";
-                    btnRight.onclick = () => moveTask(task.id, "done");
-                    buttonsDiv.appendChild(btnRight);
-                }
-                else if (task.column === "done") {
-                    const btn = document.createElement("button");
-                    btn.innerText = "← Вернуть";
-                    btn.onclick = () => moveTask(task.id, "in_progress");
-                    buttonsDiv.appendChild(btn);
-                }
-                
-                card.appendChild(buttonsDiv);
-
-                const columnMap = {
-                    "todo": "col-todo",
-                    "in_progress": "col-in-progress",
-                    "done": "col-done"
-                };
-                document.getElementById(columnMap[task.column]).appendChild(card);
+            return state.tasks.filter(task => {
+                const text = `${task.title} ${task.description}`.toLowerCase();
+                const tags = (task.tags || "").toLowerCase();
+                if (search && !text.includes(search)) return false;
+                if (priority && task.priority !== priority) return false;
+                if (tag && !tags.includes(tag)) return false;
+                if (teamId && String(task.team_id || "") !== teamId) return false;
+                if (assigneeId && String(task.assignee_id || "") !== assigneeId) return false;
+                return true;
             });
         }
 
-        function addTask() {
-    const title = document.getElementById("titleInput").value;
-    if (title.trim() === "") return;
+        function renderBoard() {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+            const tasks = getFilteredTasks();
 
-    fetch("/add_task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            title: title,
-            description: document.getElementById("descInput").value,
-            priority: document.getElementById("priorityInput").value,
-            tags: document.getElementById("tagsInput").value,
-            deadline: document.getElementById("deadlineInput").value
-        })
-    });
+            state.columns
+                .slice()
+                .sort((a, b) => a.position - b.position)
+                .forEach(column => {
+                    const col = document.createElement("div");
+                    col.className = "column";
+                    col.innerHTML = `
+                        <div class="column-header">
+                            <h3>${escapeHtml(column.name)}</h3>
+                            <span>${tasks.filter(t => t.column_id === column.id).length}</span>
+                        </div>
+                        <div class="task-list" data-column-id="${column.id}"></div>
+                    `;
+                    const list = col.querySelector(".task-list");
+                    tasks
+                        .filter(task => task.column_id === column.id)
+                        .forEach(task => list.appendChild(createTaskCard(task)));
+                    board.appendChild(col);
 
-    document.getElementById("titleInput").value = "";
-    document.getElementById("descInput").value = "";
-    document.getElementById("tagsInput").value = "";
-    document.getElementById("deadlineInput").value = "";
-}
+                    new Sortable(list, {
+                        group: "tasks",
+                        animation: 150,
+                        ghostClass: "drag-ghost",
+                        onEnd: (evt) => {
+                            const taskId = evt.item.dataset.taskId;
+                            const columnId = evt.to.dataset.columnId;
+                            moveTask(taskId, columnId);
+                        }
+                    });
+                });
+        }
 
-        function moveTask(taskId, newColumn) {
-            fetch("/move_task/" + taskId, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ column: newColumn })
+        function createTaskCard(task) {
+            const card = document.createElement("div");
+            card.className = "card priority-" + task.priority;
+            card.dataset.taskId = task.id;
+
+            const tags = (task.tags || "")
+                .split(",")
+                .map(t => t.trim())
+                .filter(Boolean)
+                .map(t => `<span class="tag">${escapeHtml(t)}</span>`)
+                .join("");
+
+            const today = new Date().toISOString().slice(0, 10);
+            const isOverdue = task.deadline && task.deadline < today && task.column_key !== "done";
+            const deadlineHtml = task.deadline
+                ? `<div class="deadline ${isOverdue ? 'overdue' : ''}">⏰ ${escapeHtml(task.deadline)}${isOverdue ? ' · просрочено' : ''}</div>`
+                : "";
+
+            const editButtons = task.can_edit ? `
+                <div class="card-actions">
+                    <button onclick="openEditModal(${task.id})" title="Редактировать">✏️</button>
+                    <button onclick="deleteTask(${task.id})" title="Удалить">🗑️</button>
+                </div>` : "";
+
+            const teamHtml = task.team_name ? `<div class="team-meta">👥 ${escapeHtml(task.team_name)}</div>` : "";
+            const assigneeHtml = task.assignee ? `<div class="team-meta">🙋 Исполнитель: ${escapeHtml(task.assignee)}</div>` : `<div class="team-meta muted-small">🙋 Не назначена</div>`;
+
+            card.innerHTML = `
+                ${editButtons}
+                <div class="card-header">
+                    <strong>${escapeHtml(task.title)}</strong>
+                    <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
+                </div>
+                ${task.description ? `<p class="card-desc">${escapeHtml(task.description)}</p>` : ""}
+                ${tags ? `<div class="tags">${tags}</div>` : ""}
+                ${teamHtml}
+                ${assigneeHtml}
+                ${deadlineHtml}
+                <div class="card-meta">#${task.id} · создал(а): ${escapeHtml(task.creator || "system")}</div>
+            `;
+            return card;
+        }
+
+        async function addTask() {
+            const title = document.getElementById("titleInput").value.trim();
+            if (!title) {
+                showNotification("Введите название задачи", "warning");
+                return;
+            }
+            await api("/add_task", "POST", {
+                title,
+                description: document.getElementById("descInput").value,
+                priority: document.getElementById("priorityInput").value,
+                tags: document.getElementById("tagsInput").value,
+                deadline: document.getElementById("deadlineInput").value,
+                team_id: document.getElementById("teamInput").value || null,
+                assignee_id: document.getElementById("assigneeInput").value || null
+            });
+            document.getElementById("titleInput").value = "";
+            document.getElementById("descInput").value = "";
+            document.getElementById("tagsInput").value = "";
+            document.getElementById("deadlineInput").value = "";
+        }
+
+        async function moveTask(taskId, columnId) {
+            await api(`/move_task/${taskId}`, "POST", { column_id: Number(columnId) });
+        }
+
+        async function deleteTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!confirm(`Удалить задачу "${task?.title || taskId}"?`)) return;
+            await api(`/delete_task/${taskId}`, "POST");
+        }
+
+        function openEditModal(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            document.getElementById("editTaskId").value = task.id;
+            document.getElementById("editTitle").value = task.title;
+            document.getElementById("editDescription").value = task.description || "";
+            document.getElementById("editPriority").value = task.priority;
+            document.getElementById("editTags").value = task.tags || "";
+            document.getElementById("editDeadline").value = task.deadline || "";
+            renderTeamSelect("editTeam", task.team_id || "", true);
+            refreshAssigneeSelect("editTeam", "editAssignee", task.assignee_id || "");
+
+            const select = document.getElementById("editColumn");
+            select.innerHTML = state.columns
+                .map(c => `<option value="${c.id}" ${c.id === task.column_id ? "selected" : ""}>${escapeHtml(c.name)}</option>`)
+                .join("");
+
+            document.getElementById("taskModal").classList.remove("hidden");
+        }
+
+        function closeEditModal() {
+            document.getElementById("taskModal").classList.add("hidden");
+        }
+
+        async function saveTaskEdit() {
+            const taskId = document.getElementById("editTaskId").value;
+            await api(`/update_task/${taskId}`, "POST", {
+                title: document.getElementById("editTitle").value,
+                description: document.getElementById("editDescription").value,
+                priority: document.getElementById("editPriority").value,
+                tags: document.getElementById("editTags").value,
+                deadline: document.getElementById("editDeadline").value,
+                team_id: document.getElementById("editTeam").value || null,
+                assignee_id: document.getElementById("editAssignee").value || null,
+                column_id: Number(document.getElementById("editColumn").value)
+            });
+            closeEditModal();
+        }
+
+        async function checkDeadlines() {
+            const result = await api("/api/check_deadlines", "POST");
+            if (result.count === 0) showNotification("Просроченных дедлайнов нет", "success");
+        }
+
+        function renderEvents() {
+            const list = document.getElementById("eventsList");
+            list.innerHTML = state.events.map(event => {
+                const payload = event.payload || {};
+                const title = payload.title || payload.name || payload.rule || payload.message || "";
+                return `
+                    <div class="event-item">
+                        <strong>${escapeHtml(event.type)}</strong>
+                        <span>${escapeHtml(event.created_at)} · ${escapeHtml(event.user)}</span>
+                        ${title ? `<small>${escapeHtml(title)}</small>` : ""}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function sendIncomingDemo() {
+            const title = document.getElementById("incomingTitle").value.trim();
+            if (!title) {
+                showNotification("Введите название входящей задачи", "warning");
+                return;
+            }
+            await api("/api/incoming_tasks", "POST", {
+                external_id: document.getElementById("incomingExternalId").value,
+                title,
+                tags: document.getElementById("incomingTags").value,
+                priority: document.getElementById("incomingPriority").value,
+                team_id: document.getElementById("incomingTeam").value || null,
+                assignee_id: document.getElementById("incomingAssignee").value || null,
+                description: "Создано через входящий поток задач"
+            });
+            document.getElementById("incomingTitle").value = "";
+        }
+
+        function renderIncoming() {
+            const list = document.getElementById("incomingList");
+            list.innerHTML = state.incoming.map(item => `
+                <div class="mini-item">
+                    <span>#${item.id} · ${escapeHtml(item.status)}</span>
+                    <small>${escapeHtml(item.external_id || "без external_id")}${item.error ? " · " + escapeHtml(item.error) : ""}</small>
+                </div>
+            `).join("");
+        }
+
+        function renderTeamSelect(selectId, selectedValue = "", includeEmpty = true) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const current = selectedValue !== undefined ? String(selectedValue || "") : select.value;
+            const options = [];
+            if (includeEmpty) options.push(`<option value="">Без команды</option>`);
+            (state.teams || []).forEach(team => {
+                options.push(`<option value="${team.id}" ${String(team.id) === current ? "selected" : ""}>${escapeHtml(team.name)}</option>`);
+            });
+            select.innerHTML = options.join("");
+            if ([...select.options].some(o => o.value === current)) select.value = current;
+        }
+
+        function getMembersForTeam(teamId) {
+            const team = (state.teams || []).find(t => String(t.id) === String(teamId));
+            return team ? team.members || [] : [];
+        }
+
+        function refreshAssigneeSelect(teamSelectId, assigneeSelectId, selectedValue = undefined) {
+            const teamSelect = document.getElementById(teamSelectId);
+            const assigneeSelect = document.getElementById(assigneeSelectId);
+            if (!teamSelect || !assigneeSelect) return;
+
+            const selected = selectedValue !== undefined ? String(selectedValue || "") : assigneeSelect.value;
+            const teamId = teamSelect.value;
+            let users = [];
+            if (teamId) {
+                const ids = new Set(getMembersForTeam(teamId).map(m => m.user_id));
+                users = (state.users || []).filter(u => ids.has(u.id));
+            } else {
+                users = (state.users || []).filter(u => IS_ADMIN || u.id === CURRENT_USER_ID);
+            }
+
+            assigneeSelect.innerHTML = `<option value="">Без исполнителя</option>` + users
+                .map(user => `<option value="${user.id}" ${String(user.id) === selected ? "selected" : ""}>${escapeHtml(user.username)} (${escapeHtml(user.role)})</option>`)
+                .join("");
+            if ([...assigneeSelect.options].some(o => o.value === selected)) assigneeSelect.value = selected;
+        }
+
+        function renderTaskFormSelects() {
+            const currentTeam = document.getElementById("teamInput")?.value || "";
+            const currentAssignee = document.getElementById("assigneeInput")?.value || "";
+            renderTeamSelect("teamInput", currentTeam, true);
+            refreshAssigneeSelect("teamInput", "assigneeInput", currentAssignee);
+
+            const incomingTeam = document.getElementById("incomingTeam")?.value || "";
+            const incomingAssignee = document.getElementById("incomingAssignee")?.value || "";
+            renderTeamSelect("incomingTeam", incomingTeam, true);
+            refreshAssigneeSelect("incomingTeam", "incomingAssignee", incomingAssignee);
+
+            renderTeamSelect("teamFilter", document.getElementById("teamFilter")?.value || "", true);
+            const teamFilter = document.getElementById("teamFilter");
+            if (teamFilter && teamFilter.options[0]) teamFilter.options[0].text = "Все команды";
+
+            const assigneeFilter = document.getElementById("assigneeFilter");
+            if (assigneeFilter) {
+                const selected = assigneeFilter.value;
+                assigneeFilter.innerHTML = `<option value="">Все исполнители</option>` + (state.users || [])
+                    .map(user => `<option value="${user.id}" ${String(user.id) === selected ? "selected" : ""}>${escapeHtml(user.username)}</option>`)
+                    .join("");
+            }
+        }
+
+        function renderTeams() {
+            const list = document.getElementById("teamsList");
+            if (!list) return;
+            if (!state.teams || state.teams.length === 0) {
+                list.innerHTML = `<div class="mini-item"><span>Пока нет команд. Создайте первую команду.</span></div>`;
+                return;
+            }
+
+            list.innerHTML = state.teams.map(team => {
+                const membersHtml = (team.members || []).map(member => `
+                    <div class="member-row">
+                        <span>${member.role === "admin" ? "🛡️" : "👤"} ${escapeHtml(member.username)}</span>
+                        <small>${escapeHtml(member.role)}</small>
+                        ${team.current_user_can_manage ? `
+                            <button onclick="changeMemberRole(${team.id}, ${member.user_id}, '${member.role === "admin" ? "member" : "admin"}')">${member.role === "admin" ? "Сделать member" : "Сделать admin"}</button>
+                            <button onclick="removeTeamMember(${team.id}, ${member.user_id})">Удалить</button>
+                        ` : ""}
+                    </div>
+                `).join("");
+
+                const addMemberHtml = team.current_user_can_manage ? `
+                    <div class="member-add-row">
+                        <select id="teamUser-${team.id}">
+                            ${(state.users || []).map(user => `<option value="${user.id}">${escapeHtml(user.username)} (${escapeHtml(user.role)})</option>`).join("")}
+                        </select>
+                        <select id="teamRole-${team.id}">
+                            <option value="member">member</option>
+                            <option value="admin">admin</option>
+                        </select>
+                        <button onclick="addTeamMember(${team.id})">Добавить</button>
+                    </div>
+                    <div class="small-actions team-actions">
+                        <button onclick="renameTeam(${team.id}, '${escapeHtml(team.name)}', '${escapeHtml(team.description || "")}')">Переим.</button>
+                        <button onclick="deleteTeam(${team.id})">Удалить команду</button>
+                    </div>
+                ` : "";
+
+                return `
+                    <div class="mini-item team-item">
+                        <div class="row-between">
+                            <div>
+                                <strong>👥 ${escapeHtml(team.name)}</strong>
+                                <small>${escapeHtml(team.description || "без описания")} · создал(а): ${escapeHtml(team.created_by)}</small>
+                            </div>
+                            ${team.current_user_can_manage ? `<span class="team-admin-badge">admin</span>` : `<span class="team-member-badge">member</span>`}
+                        </div>
+                        <div class="members-list">${membersHtml}</div>
+                        ${addMemberHtml}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function addTeam() {
+            const nameInput = document.getElementById("newTeamName");
+            const descInput = document.getElementById("newTeamDescription");
+            const name = nameInput.value.trim();
+            if (!name) {
+                showNotification("Введите название команды", "warning");
+                return;
+            }
+            await api("/add_team", "POST", { name, description: descInput.value });
+            nameInput.value = "";
+            descInput.value = "";
+        }
+
+        async function renameTeam(id, oldName, oldDescription) {
+            const name = prompt("Новое название команды", oldName);
+            if (!name) return;
+            const description = prompt("Описание команды", oldDescription || "") ?? oldDescription;
+            await api(`/update_team/${id}`, "POST", { name, description });
+        }
+
+        async function deleteTeam(id) {
+            if (!confirm("Удалить команду? Задачи останутся, но будут без команды и без исполнителя.")) return;
+            await api(`/delete_team/${id}`, "POST");
+        }
+
+        async function addTeamMember(teamId) {
+            await api(`/add_team_member/${teamId}`, "POST", {
+                user_id: document.getElementById(`teamUser-${teamId}`).value,
+                role: document.getElementById(`teamRole-${teamId}`).value
             });
         }
 
-        function deleteTask(taskId) {
-            fetch("/delete_task/" + taskId, {
-                method: "POST"
-            });
+        async function changeMemberRole(teamId, userId, role) {
+            await api(`/update_team_member/${teamId}/${userId}`, "POST", { role });
         }
 
-        // Начальная отрисовка
-        const initialTasks = [
-            {% for task in tasks %}
-                {
-                    "id": {{ task.id }},
-                    "title": "{{ task.title|replace('"', '\\"')|safe }}",
-                    "description": "{{ task.description|replace('"', '\\"')|safe if task.description else '' }}",
-                    "priority": "{{ task.priority }}",
-                    "column": "{{ task.column }}"
-                }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        ];
-        drawBoard(initialTasks);
+        async function removeTeamMember(teamId, userId) {
+            if (!confirm("Удалить участника из команды?")) return;
+            await api(`/remove_team_member/${teamId}/${userId}`, "POST");
+        }
 
-        // ====== ПРАВИЛА ======
-socket.on("update_rules", (rules) => {
-    const container = document.getElementById("rulesList");
-    container.innerHTML = "";
-    rules.forEach(rule => {
-        const div = document.createElement("div");
-        div.id = "rule-" + rule.id;
-        div.style = "padding: 10px; background: #f5f5f5; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;";
-        div.innerHTML = `
-            <span>
-                ${rule.enabled ? "🟢" : "🔴"}
-                <strong>${rule.name}</strong>: 
-                Когда ${rule.trigger} и ${rule.condition_field}=${rule.condition_value} → 
-                ${rule.action_type}: ${rule.action_value}
-            </span>
-            <div>
-                <button onclick="toggleRule(${rule.id})" style="font-size: 12px;">
-                    ${rule.enabled ? "Выкл" : "Вкл"}
-                </button>
-                <button onclick="deleteRule(${rule.id})" style="font-size: 12px; color: red;">Удалить</button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-});
+        function renderColumnsAdmin() {
+            if (!IS_ADMIN) return;
+            const list = document.getElementById("columnsAdminList");
+            list.innerHTML = state.columns
+                .slice()
+                .sort((a, b) => a.position - b.position)
+                .map((column, index, arr) => `
+                    <div class="mini-item row-between">
+                        <div>
+                            <strong>${escapeHtml(column.name)}</strong>
+                            <small>key: ${escapeHtml(column.key)}</small>
+                        </div>
+                        <div class="small-actions">
+                            <button onclick="moveColumnAdmin(${index}, -1)" ${index === 0 ? "disabled" : ""}>↑</button>
+                            <button onclick="moveColumnAdmin(${index}, 1)" ${index === arr.length - 1 ? "disabled" : ""}>↓</button>
+                            <button onclick="renameColumn(${column.id}, '${escapeHtml(column.name)}')">Переим.</button>
+                            <button onclick="deleteColumn(${column.id})">Удалить</button>
+                        </div>
+                    </div>
+                `).join("");
+        }
 
-function addRule() {
-    fetch("/add_rule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            name: document.getElementById("ruleName").value,
-            trigger: document.getElementById("ruleTrigger").value,
-            condition_field: document.getElementById("ruleField").value,
-            condition_value: document.getElementById("ruleValue").value,
-            action_type: document.getElementById("ruleAction").value,
-            action_value: document.getElementById("ruleActionValue").value
-        })
-    });
-    // Очистить поля
-    document.getElementById("ruleName").value = "";
-    document.getElementById("ruleValue").value = "";
-    document.getElementById("ruleActionValue").value = "";
-}
+        async function addColumn() {
+            const input = document.getElementById("newColumnName");
+            const name = input.value.trim();
+            if (!name) return;
+            await api("/add_column", "POST", { name });
+            input.value = "";
+        }
 
-function toggleRule(id) {
-    fetch("/toggle_rule/" + id, { method: "POST" });
-}
+        async function renameColumn(id, oldName) {
+            const name = prompt("Новое название колонки", oldName);
+            if (!name) return;
+            await api(`/update_column/${id}`, "POST", { name });
+        }
 
-function deleteRule(id) {
-    fetch("/delete_rule/" + id, { method: "POST" });
-}
+        async function deleteColumn(id) {
+            if (!confirm("Удалить колонку? Задачи из неё переедут в первую доступную колонку.")) return;
+            await api(`/delete_column/${id}`, "POST");
+        }
+
+        async function moveColumnAdmin(index, direction) {
+            const columns = state.columns.slice().sort((a, b) => a.position - b.position);
+            const target = index + direction;
+            if (target < 0 || target >= columns.length) return;
+            [columns[index], columns[target]] = [columns[target], columns[index]];
+            await api("/reorder_columns", "POST", { ids: columns.map(c => c.id) });
+        }
+
+        function renderRules() {
+            if (!IS_ADMIN) return;
+            const list = document.getElementById("rulesList");
+            list.innerHTML = state.rules.map(rule => `
+                <div class="mini-item row-between">
+                    <div>
+                        <strong>${rule.enabled ? "🟢" : "🔴"} ${escapeHtml(rule.name)}</strong>
+                        <small>${escapeHtml(rule.trigger)} · if ${escapeHtml(rule.condition_field)} ${escapeHtml(rule.condition_operator)} ${escapeHtml(rule.condition_value || "-")} → ${escapeHtml(rule.action_type)}: ${escapeHtml(rule.action_value)}</small>
+                    </div>
+                    <div class="small-actions">
+                        <button onclick="toggleRule(${rule.id})">${rule.enabled ? "Выкл" : "Вкл"}</button>
+                        <button onclick="deleteRule(${rule.id})">Удалить</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function addRule() {
+            await api("/add_rule", "POST", {
+                name: document.getElementById("ruleName").value,
+                trigger: document.getElementById("ruleTrigger").value,
+                condition_field: document.getElementById("ruleField").value,
+                condition_operator: document.getElementById("ruleOperator").value,
+                condition_value: document.getElementById("ruleValue").value,
+                action_type: document.getElementById("ruleAction").value,
+                action_value: document.getElementById("ruleActionValue").value
+            });
+            document.getElementById("ruleName").value = "";
+            document.getElementById("ruleValue").value = "";
+            document.getElementById("ruleActionValue").value = "";
+        }
+
+        async function toggleRule(id) {
+            await api(`/toggle_rule/${id}`, "POST");
+        }
+
+        async function deleteRule(id) {
+            if (!confirm("Удалить правило?")) return;
+            await api(`/delete_rule/${id}`, "POST");
+        }
+
+        function renderAll() {
+            renderTaskFormSelects();
+            renderBoard();
+            renderEvents();
+            renderIncoming();
+            renderTeams();
+            renderRules();
+            renderColumnsAdmin();
+        }
+
+        renderAll();
     </script>
 </body>
 </html>

@@ -1,0 +1,83 @@
+services:
+  web:
+    build: .
+    command: python app.py
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: "hackathon-dev-secret-change-me"
+      DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
+      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      REDIS_URL: "redis://redis:6379/0"
+      INCOMING_API_KEY: "dev-incoming-token"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    restart: unless-stopped
+
+  outbox:
+    build: .
+    command: python outbox_publisher.py
+    environment:
+      SECRET_KEY: "hackathon-dev-secret-change-me"
+      DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
+      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      REDIS_URL: "redis://redis:6379/0"
+      INCOMING_API_KEY: "dev-incoming-token"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+      - web
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: python worker.py
+    environment:
+      SECRET_KEY: "hackathon-dev-secret-change-me"
+      DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
+      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      REDIS_URL: "redis://redis:6379/0"
+      INCOMING_API_KEY: "dev-incoming-token"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+      - web
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: kanban
+      POSTGRES_USER: kanban
+      POSTGRES_PASSWORD: kanban
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: kanban
+      RABBITMQ_DEFAULT_PASS: kanban
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rabbitmq_data:

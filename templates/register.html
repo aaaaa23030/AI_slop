@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация — Kanban Event System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="auth-body">
+    <div class="auth-card">
+        <h1>🧑‍💻 Регистрация</h1>
+        <p class="muted">Новые аккаунты создаются с ролью user</p>
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            <label>Логин</label>
+            <input type="text" name="username" placeholder="marina" required>
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="you@example.com">
+
+            <label>Пароль</label>
+            <input type="password" name="password" placeholder="минимум 6 символов" required>
+
+            <button type="submit" class="btn-primary full">Создать аккаунт</button>
+        </form>
+
+        <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+    </div>
+</body>
+</html>
