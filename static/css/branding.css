@@ -1,0 +1,46 @@
+/* NineCell branding patch */
+.brand-logo-img {
+    object-fit: contain;
+    background: transparent !important;
+    box-shadow: 0 15px 28px rgba(36, 87, 255, .12) !important;
+    padding: 0;
+}
+
+.mobile-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.mobile-brand img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.auth-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 18px;
+}
+
+.auth-logo {
+    width: min(280px, 100%);
+    height: auto;
+    display: block;
+}
+
+.auth-card h1 {
+    text-align: center;
+}
+
+.auth-card > .muted {
+    text-align: center;
+}
+
+.sidebar-collapsed .brand-logo-img {
+    width: 44px;
+    height: 44px;
+}

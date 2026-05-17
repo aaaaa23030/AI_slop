@@ -2,12 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Регистрация — Kanban Event System</title>
+    <title>Регистрация — NineCell</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/ninecell-mark.svg') }}">
 </head>
 <body class="auth-body">
     <div class="auth-card">
-        <h1>🧑‍💻 Регистрация</h1>
+        <div class="auth-logo-wrap"><img class="auth-logo" src="{{ url_for('static', filename='img/ninecell-logo.svg') }}" alt="NineCell"></div>
+        <h1>Регистрация</h1>
         <p class="muted">Новые аккаунты создаются с ролью user</p>
 
         {% if error %}
@@ -26,6 +29,24 @@
 
             <button type="submit" class="btn-primary full">Создать аккаунт</button>
         </form>
+
+
+        <div class="auth-divider"><span>или</span></div>
+
+        <div class="telegram-auth-box">
+            <h3>Регистрация через Telegram</h3>
+            <p class="muted">Напишите боту <code>/login</code>. Если аккаунта ещё нет, система создаст его автоматически после ввода кода.</p>
+            {% if telegram_bot_username %}
+                <a class="btn-telegram full" href="https://t.me/{{ telegram_bot_username }}" target="_blank" rel="noopener">Открыть @{{ telegram_bot_username }}</a>
+            {% endif %}
+            <form method="post" action="{{ url_for('telegram_code_login') }}" class="auth-form compact-auth-form">
+                <label>Код из Telegram</label>
+                <div class="telegram-code-row">
+                    <input type="text" name="telegram_code" placeholder="123456" inputmode="numeric" maxlength="6" required>
+                    <button type="submit" class="btn-telegram">Создать/войти</button>
+                </div>
+            </form>
+        </div>
 
         <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
     </div>

@@ -11,6 +11,8 @@ RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://kanban:kanban@localhost:56
 EXCHANGE = "kanban"
 INCOMING_QUEUE = "incoming_tasks"
 INCOMING_DEAD_QUEUE = "incoming_tasks_dead"
+AUTOMATION_QUEUE = "automation_events"
+AUTOMATION_DEAD_QUEUE = "automation_events_dead"
 DLX = "kanban.dead"
 
 
@@ -46,9 +48,24 @@ def setup_rabbitmq() -> None:
     )
     channel.queue_bind(queue=INCOMING_QUEUE, exchange=EXCHANGE, routing_key="incoming.task.created")
 
-    # Dead-letter queue: messages that could not be processed.
+    # Dead-letter queue: incoming messages that could not be processed.
     channel.queue_declare(queue=INCOMING_DEAD_QUEUE, durable=True)
     channel.queue_bind(queue=INCOMING_DEAD_QUEUE, exchange=DLX, routing_key="incoming.task.failed")
+
+    # Automation queue: all task-domain events are consumed by automation_worker.py.
+    channel.queue_declare(
+        queue=AUTOMATION_QUEUE,
+        durable=True,
+        arguments={
+            "x-dead-letter-exchange": DLX,
+            "x-dead-letter-routing-key": "automation.event.failed",
+        },
+    )
+    for routing_key in ["task.created", "task.updated", "task.moved", "incoming.task.processed"]:
+        channel.queue_bind(queue=AUTOMATION_QUEUE, exchange=EXCHANGE, routing_key=routing_key)
+
+    channel.queue_declare(queue=AUTOMATION_DEAD_QUEUE, durable=True)
+    channel.queue_bind(queue=AUTOMATION_DEAD_QUEUE, exchange=DLX, routing_key="automation.event.failed")
 
     connection.close()
 

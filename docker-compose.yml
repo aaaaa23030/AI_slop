@@ -1,15 +1,21 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     command: python app.py
     ports:
       - "5000:5000"
     environment:
-      SECRET_KEY: "hackathon-dev-secret-change-me"
+      SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
       RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
-      INCOMING_API_KEY: "dev-incoming-token"
+      INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_BOT_USERNAME: "${TELEGRAM_BOT_USERNAME:-}"
+      TELEGRAM_LOGIN_TTL_SECONDS: "${TELEGRAM_LOGIN_TTL_SECONDS:-600}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
     depends_on:
       - postgres
       - rabbitmq
@@ -17,14 +23,17 @@ services:
     restart: unless-stopped
 
   outbox:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     command: python outbox_publisher.py
     environment:
-      SECRET_KEY: "hackathon-dev-secret-change-me"
+      SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
       RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
-      INCOMING_API_KEY: "dev-incoming-token"
+      INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
     depends_on:
       - postgres
       - rabbitmq
@@ -33,19 +42,58 @@ services:
     restart: unless-stopped
 
   worker:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     command: python worker.py
     environment:
-      SECRET_KEY: "hackathon-dev-secret-change-me"
+      SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
       RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
-      INCOMING_API_KEY: "dev-incoming-token"
+      INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
     depends_on:
       - postgres
       - rabbitmq
       - redis
       - web
+    restart: unless-stopped
+
+  automation:
+    build:
+      context: .
+      dockerfile: dockerfile
+    command: python automation_worker.py
+    environment:
+      SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
+      DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
+      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      REDIS_URL: "redis://redis:6379/0"
+      INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+      - web
+      - outbox
+    restart: unless-stopped
+
+  telegram_bot:
+    build:
+      context: .
+      dockerfile: dockerfile
+    command: python telegram_bot.py
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_BOT_USERNAME: "${TELEGRAM_BOT_USERNAME:-}"
+      WEB_API_URL: "http://web:5000/api/incoming_tasks"
+      TELEGRAM_AUTH_URL: "http://web:5000/api/telegram_auth/request_code"
+      INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
+    depends_on:
+      - web
+      - rabbitmq
     restart: unless-stopped
 
   postgres:

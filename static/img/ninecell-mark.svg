@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="NineCell mark">
+  <defs>
+    <linearGradient id="cellBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2457ff"/>
+      <stop offset="1" stop-color="#6d5dfc"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="30" fill="#f8fbff"/>
+  <g transform="translate(18 18)">
+    <rect x="0" y="0" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="30" y="0" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="60" y="0" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="0" y="30" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="30" y="30" width="24" height="24" rx="7" fill="url(#cellBlue)"/>
+    <rect x="60" y="30" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="0" y="60" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="30" y="60" width="24" height="24" rx="7" fill="#06164d"/>
+    <rect x="60" y="60" width="24" height="24" rx="7" fill="#06164d"/>
+    <path d="M36.5 42.8l7.2 7.2 14.5-17" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

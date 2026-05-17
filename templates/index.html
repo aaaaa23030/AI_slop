@@ -1,170 +1,732 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Kanban Event System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NineCell · Event-driven Kanban</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/ninecell-mark.svg') }}">
+
+    <style>
+        /* Team management UI override. This block is inside index.html on purpose,
+           so the Teams panel keeps working even if the external CSS is cached. */
+        .teams-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .88);
+            border: 1px solid rgba(226, 232, 240, .95);
+            box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+        }
+
+        .teams-toolbar strong {
+            display: block;
+            color: #0f172a;
+        }
+
+        .teams-toolbar span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .teams-toolbar-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .team-management-card {
+            display: grid;
+            gap: 0;
+            margin-bottom: 14px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, .92);
+            border: 1px solid rgba(226, 232, 240, .95);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+            overflow: hidden;
+        }
+
+        .team-card-toggle {
+            width: 100%;
+            border: 0;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(248, 250, 252, .96), rgba(255, 255, 255, .96));
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            text-align: left;
+        }
+
+        .team-card-toggle:hover {
+            background: #f8fafc;
+        }
+
+        .team-card-main {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .team-chevron {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: #eef2ff;
+            color: #3730a3;
+            font-weight: 900;
+            flex: 0 0 auto;
+        }
+
+        .team-title-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .team-title-line strong {
+            color: #0f172a;
+            font-size: 16px;
+        }
+
+        .team-card-toggle small {
+            color: #64748b;
+            line-height: 1.45;
+        }
+
+        .team-card-body {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .team-management-card.is-collapsed .team-card-body {
+            display: none;
+        }
+
+        .team-count,
+        .team-admin-badge,
+        .team-member-badge {
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            background: #eef2ff;
+            color: #3730a3;
+            white-space: nowrap;
+        }
+
+        .team-admin-badge {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .team-member-badge {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .team-admin-section {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 18px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .team-member-row,
+        .team-action-row,
+        .team-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .team-member-row {
+            justify-content: space-between;
+            padding: 10px;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+        }
+
+        .member-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-main small {
+            display: block;
+            color: #64748b;
+        }
+
+        .member-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .team-action-row select,
+        .team-action-row input {
+            min-height: 40px;
+            border-radius: 12px;
+        }
+
+        .team-action-row select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .team-action-row input {
+            width: 90px;
+        }
+
+        .btn-soft,
+        .btn-danger-soft {
+            border: 0;
+            border-radius: 12px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .btn-soft.compact,
+        .btn-danger-soft.compact,
+        .btn-primary.compact {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .btn-soft {
+            color: #1e40af;
+            background: #eff6ff;
+        }
+
+        .btn-soft:hover {
+            background: #dbeafe;
+        }
+
+        .btn-danger-soft {
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        .btn-danger-soft:hover {
+            background: #fecaca;
+        }
+
+        .team-danger-zone {
+            border-color: #fecaca;
+            background: #fff7f7;
+        }
+
+        .team-readonly-note,
+        .muted-small {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 700px) {
+            .teams-toolbar,
+            .team-card-toggle {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .team-admin-badge,
+            .team-member-badge {
+                width: fit-content;
+            }
+
+            .team-action-row select,
+            .team-action-row input,
+            .team-action-row button {
+                width: 100%;
+            }
+        }
+
+
+        /* ================= TASK CARD HEADER FIX =================
+           Название задачи слева, 3 кнопки справа на той же линии,
+           приоритет — ниже кнопок. */
+        .card {
+            position: relative !important;
+            padding: 15px 16px 16px 16px !important;
+            border-radius: 22px !important;
+            overflow: hidden !important;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: #94a3b8;
+        }
+
+        .card.priority-low::before { background: var(--green, #16a34a); }
+        .card.priority-medium::before { background: var(--amber, #f59e0b); }
+        .card.priority-high::before { background: var(--red, #ef4444); }
+        .card.priority-critical::before { background: var(--purple, #8b5cf6); }
+
+        .card-header.task-card-header {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            align-items: start !important;
+            gap: 12px !important;
+            margin: 0 0 12px 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+        }
+
+        .task-title {
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #0f172a !important;
+            font-size: 17px !important;
+            font-weight: 900 !important;
+            line-height: 1.25 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+        .task-card-side {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            gap: 8px !important;
+            flex: 0 0 auto !important;
+        }
+
+        .task-card-side .card-actions {
+            position: static !important;
+            top: auto !important;
+            right: auto !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .task-card-side .card-actions button {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 14px !important;
+            background: #f1f5f9 !important;
+            color: #64748b !important;
+            display: inline-grid !important;
+            place-items: center !important;
+            box-shadow: none !important;
+        }
+
+        .task-card-side .card-actions button:hover {
+            background: #e0e7ff !important;
+            color: #1d4ed8 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .task-card-side .badge {
+            position: static !important;
+            top: auto !important;
+            right: auto !important;
+            margin: 0 !important;
+            width: fit-content !important;
+            min-height: 28px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 5px 12px !important;
+            border-radius: 999px !important;
+            font-size: 12px !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            color: #fff !important;
+        }
+
+        .task-card-side .badge-low { background: var(--green, #16a34a) !important; }
+        .task-card-side .badge-medium { background: var(--amber, #f59e0b) !important; }
+        .task-card-side .badge-high { background: var(--red, #ef4444) !important; }
+        .task-card-side .badge-critical { background: var(--purple, #8b5cf6) !important; }
+
+        .card-desc,
+        .tags,
+        .team-meta,
+        .deadline,
+        .card-meta {
+            padding-right: 0 !important;
+        }
+
+        @media (max-width: 620px) {
+            .card-header.task-card-header {
+                grid-template-columns: 1fr !important;
+            }
+
+            .task-card-side {
+                align-items: flex-start !important;
+            }
+
+            .task-card-side .card-actions {
+                justify-content: flex-start !important;
+            }
+        }
+
+    </style>
 </head>
 <body>
     <div id="notifications"></div>
 
-    <header class="topbar">
-        <div>
-            <h1>🚀 Kanban Event System</h1>
-            <p>Real-time доска + автоматизация + очередь входящих задач</p>
-        </div>
-        <div class="user-box">
-            <span>👤 {{ current_user.username }}</span>
-            <span class="role role-{{ current_user.role }}">{{ current_user.role }}</span>
-            <a href="{{ url_for('logout') }}">Выйти</a>
-        </div>
-    </header>
-
-    <main class="layout">
-        <section class="left-panel">
-            <div class="panel">
-                <h3>➕ Новая задача</h3>
-                <div class="grid-form">
-                    <input type="text" id="titleInput" placeholder="Название задачи">
-                    <select id="priorityInput">
-                        <option value="low">🟢 Низкий</option>
-                        <option value="medium" selected>🟠 Средний</option>
-                        <option value="high">🔴 Высокий</option>
-                        <option value="critical">🟣 Критический</option>
-                    </select>
-                    <input type="text" id="tagsInput" placeholder="Теги: bug, urgent">
-                    <input type="date" id="deadlineInput">
-                    <select id="teamInput" onchange="refreshAssigneeSelect('teamInput', 'assigneeInput')"></select>
-                    <select id="assigneeInput"></select>
-                    <textarea id="descInput" placeholder="Описание" rows="2"></textarea>
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="brand-block">
+                <img class="brand-logo brand-logo-img" src="{{ url_for('static', filename='img/ninecell-mark.svg') }}" alt="NineCell">
+                <div class="brand-copy">
+                    <strong>NineCell</strong>
+                    <span>Event-driven Kanban</span>
                 </div>
-                <button class="btn-primary" onclick="addTask()">Добавить задачу</button>
+                <button class="icon-button sidebar-toggle" onclick="toggleSidebar()" title="Свернуть меню">☰</button>
             </div>
 
-            <div class="panel">
-                <h3>🔎 Фильтры</h3>
-                <div class="filters">
-                    <input type="text" id="searchFilter" placeholder="Поиск по названию/описанию" oninput="renderBoard()">
-                    <select id="priorityFilter" onchange="renderBoard()">
-                        <option value="">Все приоритеты</option>
-                        <option value="low">Низкий</option>
-                        <option value="medium">Средний</option>
-                        <option value="high">Высокий</option>
-                        <option value="critical">Критический</option>
-                    </select>
-                    <input type="text" id="tagFilter" placeholder="Тег" oninput="renderBoard()">
-                    <select id="teamFilter" onchange="renderBoard()"></select>
-                    <select id="assigneeFilter" onchange="renderBoard()"></select>
-                    <button onclick="resetFilters()">Сбросить</button>
-                </div>
-            </div>
+            <nav class="nav-list">
+                <button class="nav-item active" data-tool="filters" onclick="openTool('filters')"><span>🔎</span><b>Фильтры</b></button>
+                <button class="nav-item" data-tool="teams" onclick="openTool('teams')"><span>👥</span><b>Команды</b></button>
+                <button class="nav-item" data-tool="queue" onclick="openTool('queue')"><span>📥</span><b>Очередь</b></button>
+                {% if current_user.role == 'admin' %}
+                <button class="nav-item" data-tool="health" onclick="openTool('health')"><span>🩺</span><b>Статус</b></button>
+                {% endif %}
+                <button class="nav-item" data-tool="notifications" onclick="openTool('notifications')"><span>🔔</span><b>Уведомления</b></button>
+                <button class="nav-item" data-tool="events" onclick="openTool('events')"><span>🧾</span><b>События</b></button>
+                {% if current_user.role == 'admin' %}
+                <button class="nav-item" data-tool="columns" onclick="openTool('columns')"><span>🧱</span><b>Колонки</b></button>
+                <button class="nav-item" data-tool="rules" onclick="openTool('rules')"><span>⚙️</span><b>Правила</b></button>
+                {% endif %}
+                <button class="nav-item" data-tool="guide" onclick="openTool('guide')"><span>📘</span><b>Инструкция</b></button>
+            </nav>
 
-            <div class="panel team-panel">
-                <h3>👥 Команды и назначение задач</h3>
-                <p class="muted">Можно создать команду, добавить участников и выдать роль admin/member. Админ команды может назначать задачи участникам.</p>
-                <div class="grid-form">
-                    <input type="text" id="newTeamName" placeholder="Название команды">
-                    <input type="text" id="newTeamDescription" placeholder="Описание команды">
+            <div class="sidebar-footer">
+                <span class="avatar">{{ current_user.username[0]|upper }}</span>
+                <div>
+                    <strong>{{ current_user.username }}</strong>
+                    <small>{{ current_user.role }}</small>
                 </div>
-                <button class="btn-primary" onclick="addTeam()">+ Создать команду</button>
-                <div id="teamsList" class="mini-list"></div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title-row">
-                    <h3>📥 Входящий поток задач</h3>
-                    <button onclick="sendIncomingDemo()">Отправить в очередь</button>
-                </div>
-                <p class="muted">Имитирует API/очередь: задача валидируется, проверяется на дубли и обогащается.</p>
-                <div class="grid-form">
-                    <input type="text" id="incomingExternalId" placeholder="external_id, например CRM-42">
-                    <input type="text" id="incomingTitle" placeholder="Название входящей задачи">
-                    <input type="text" id="incomingTags" placeholder="Теги, например bug, urgent">
-                    <select id="incomingTeam" onchange="refreshAssigneeSelect('incomingTeam', 'incomingAssignee')"></select>
-                    <select id="incomingAssignee"></select>
-                    <select id="incomingPriority">
-                        <option value="">Авто-приоритет</option>
-                        <option value="low">low</option>
-                        <option value="medium">medium</option>
-                        <option value="high">high</option>
-                        <option value="critical">critical</option>
-                    </select>
-                </div>
-                <div id="incomingList" class="mini-list"></div>
-            </div>
-
-            {% if current_user.role == 'admin' %}
-            <div class="panel admin-panel">
-                <h3>🧱 Колонки</h3>
-                <div class="inline-form">
-                    <input type="text" id="newColumnName" placeholder="Например: Review">
-                    <button onclick="addColumn()">Добавить колонку</button>
-                </div>
-                <div id="columnsAdminList" class="mini-list"></div>
-            </div>
-
-            <div class="panel admin-panel">
-                <h3>⚙️ Правила автоматизации</h3>
-                <div class="rules-grid">
-                    <input type="text" id="ruleName" placeholder="Название правила">
-                    <select id="ruleTrigger">
-                        <option value="task_created">Когда задача создана</option>
-                        <option value="task_updated">Когда задача изменена</option>
-                        <option value="task_moved">Когда задача перемещена</option>
-                        <option value="incoming_task">Когда пришла из очереди</option>
-                    </select>
-                    <select id="ruleField">
-                        <option value="always">Всегда</option>
-                        <option value="priority">Приоритет</option>
-                        <option value="column">Колонка key</option>
-                        <option value="tags">Теги</option>
-                        <option value="title">Название</option>
-                        <option value="deadline">Дедлайн</option>
-                    </select>
-                    <select id="ruleOperator">
-                        <option value="equals">равно</option>
-                        <option value="contains">содержит</option>
-                        <option value="not_equals">не равно</option>
-                    </select>
-                    <input type="text" id="ruleValue" placeholder="critical / bug / overdue">
-                    <select id="ruleAction">
-                        <option value="move_column">Переместить в колонку</option>
-                        <option value="send_notification">Уведомить</option>
-                        <option value="set_priority">Изменить приоритет</option>
-                        <option value="add_tag">Добавить тег</option>
-                    </select>
-                    <input type="text" id="ruleActionValue" placeholder="in_progress / Текст / critical">
-                </div>
-                <button class="btn-purple" onclick="addRule()">+ Создать правило</button>
-                <div id="rulesList" class="mini-list"></div>
-            </div>
-            {% endif %}
-        </section>
-
-        <section class="board-section">
-            <div class="board-actions">
-                <h2>Канбан-доска</h2>
-                <button onclick="checkDeadlines()">⏰ Проверить дедлайны</button>
-            </div>
-            <div class="board" id="board"></div>
-        </section>
-
-        <aside class="right-panel">
-            <div class="panel">
-                <h3>🧾 История событий</h3>
-                <p class="muted">Audit log: кто, что и когда сделал.</p>
-                <div id="eventsList" class="event-list"></div>
+                <a class="logout-link" href="{{ url_for('logout') }}" title="Выйти">↪</a>
             </div>
         </aside>
-    </main>
+
+        <div class="mobile-topbar">
+            <button class="icon-button" onclick="toggleSidebar()">☰</button>
+            <span class="mobile-brand"><img src="{{ url_for('static', filename='img/ninecell-mark.svg') }}" alt="NineCell"> <strong>NineCell</strong></span>
+            <button class="btn-compact" onclick="openTaskComposer()">+ Задача</button>
+        </div>
+
+        <main class="workspace">
+            <header class="hero-bar">
+                <div>
+                    <p class="eyebrow">Realtime · RabbitMQ · Teams · Automation</p>
+                    <h1>Канбан-доска всегда перед глазами</h1>
+                    <p>Создавайте задачи, назначайте исполнителей, подключайте входящий поток и проверяйте события без перегруза интерфейса.</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn-primary" onclick="openTaskComposer()">＋ Новая задача</button>
+                    {% if current_user.role == 'admin' %}<button class="btn-secondary" onclick="runPrimeDemo()">🚀 Demo Mode</button>{% endif %}
+                    <button class="btn-secondary" onclick="openTool('guide')">Как пользоваться</button>
+                </div>
+            </header>
+
+            <section class="stats-strip" id="statsGrid"></section>
+
+            <section class="board-section">
+                <div class="board-toolbar">
+                    <div>
+                        <h2>Задачи</h2>
+                        <span>Перетаскивайте карточки между колонками. Изменения сохраняются в PostgreSQL и синхронизируются через Socket.IO.</span>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button onclick="openTool('filters')">🔎 Фильтры</button>
+                        <button onclick="checkDeadlines()">⏰ Дедлайны</button>
+                    </div>
+                </div>
+                <div class="board" id="board"></div>
+            </section>
+
+            <footer class="site-footer">
+                <div>
+                    <strong>NineCell</strong>
+                    <span>Мини-Jira/Trello для хакатона: real-time, RabbitMQ, automation, команды.</span>
+                </div>
+                <button onclick="openTool('guide')">О сервисе и инструкция</button>
+            </footer>
+        </main>
+
+        <aside class="tool-drawer" id="toolDrawer">
+            <div class="drawer-header">
+                <div>
+                    <span class="drawer-kicker">Рабочая панель</span>
+                    <h2 id="drawerTitle">Фильтры и поиск</h2>
+                </div>
+                <button class="icon-button" onclick="closeToolDrawer()">✕</button>
+            </div>
+
+            <section class="tool-panel active" data-panel="filters">
+                <div class="tool-card">
+                    <h3>🔎 Быстрый поиск</h3>
+                    <p class="muted">Фильтры не меняют данные в базе, они только помогают сфокусироваться на нужных карточках.</p>
+                    <div class="stack-form">
+                        <input type="text" id="searchFilter" placeholder="Поиск по названию/описанию" oninput="renderBoard()">
+                        <select id="priorityFilter" onchange="renderBoard()">
+                            <option value="">Все приоритеты</option>
+                            <option value="low">Низкий</option>
+                            <option value="medium">Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="critical">Критический</option>
+                        </select>
+                        <select id="scopeFilter" onchange="renderBoard()">
+                            <option value="">Все задачи</option>
+                            <option value="mine">Только мои</option>
+                            <option value="unassigned">Без исполнителя</option>
+                            <option value="overdue">Просроченные</option>
+                            <option value="today">Дедлайн сегодня</option>
+                        </select>
+                        <input type="text" id="tagFilter" placeholder="Тег: bug, urgent, payment" oninput="renderBoard()">
+                        <select id="teamFilter" onchange="renderBoard()"></select>
+                        <select id="assigneeFilter" onchange="renderBoard()"></select>
+                        <button onclick="resetFilters()">Сбросить фильтры</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tool-panel" data-panel="teams">
+                <div class="tool-card team-workspace-card">
+                    <h3>👥 Команды</h3>
+                    <p class="muted">Команды нужны, чтобы задачи были видны не всем подряд, а только участникам. Админ команды может редактировать команду, приглашать людей ссылкой, добавлять уже зарегистрированных пользователей, менять роли и удалять участников.</p>
+                    <div class="info-strip">
+                        <span>🔐 Личные задачи видит только автор/исполнитель.</span>
+                        <span>👥 Командные задачи видят участники команды.</span>
+                        <span>🛡️ Админ команды может назначать задачи другим.</span>
+                    </div>
+                    <div class="team-create-box">
+                        <div class="grid-form">
+                            <input type="text" id="newTeamName" placeholder="Название команды, например Frontend">
+                            <input type="text" id="newTeamDescription" placeholder="Описание: кто входит и за что отвечает">
+                        </div>
+                        <button class="btn-primary" onclick="addTeam()">+ Создать команду</button>
+                    </div>
+                    <div id="teamsList" class="mini-list teams-management-list"></div>
+                </div>
+            </section>
+
+            <section class="tool-panel" data-panel="queue">
+                <div class="tool-card">
+                    <h3>📥 Входящий поток задач</h3>
+                    <p class="muted">Это демо внешнего API: задача попадает в PostgreSQL outbox, затем в RabbitMQ, затем worker создаёт карточку.</p>
+                    <div class="stack-form">
+                        <input type="text" id="incomingExternalId" placeholder="external_id, например CRM-42">
+                        <input type="text" id="incomingTitle" placeholder="Название входящей задачи">
+                        <input type="text" id="incomingTags" placeholder="Теги, например bug, urgent">
+                        <select id="incomingTeam" onchange="refreshAssigneeSelect('incomingTeam', 'incomingAssignee')"></select>
+                        <select id="incomingAssignee"></select>
+                        <select id="incomingPriority">
+                            <option value="">Авто-приоритет</option>
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                            <option value="critical">critical</option>
+                        </select>
+                        <button class="btn-primary" onclick="sendIncomingDemo()">Отправить в очередь</button>
+                    </div>
+                    <div class="queue-hint">Ошибочные записи можно повторить кнопкой Retry. Это демонстрирует надёжную обработку входящего потока.</div>
+                    <div id="incomingList" class="mini-list"></div>
+                </div>
+            </section>
+
+
+            {% if current_user.role == 'admin' %}
+            <section class="tool-panel" data-panel="health">
+                <div class="tool-card">
+                    <div class="panel-title-row">
+                        <h3>🩺 System Health</h3>
+                        <div class="row-actions">
+                            <button onclick="refreshHealth()">Обновить</button>
+                            <button class="btn-purple compact" onclick="runPrimeDemo()">🚀 Demo Mode</button>
+                        </div>
+                    </div>
+                    <p class="muted">Панель для защиты и отладки: PostgreSQL, RabbitMQ, Redis, очереди, outbox и ошибки входящего потока.</p>
+                    <div id="healthPanel" class="health-grid"></div>
+                    <div id="healthRecommendations" class="mini-list"></div>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="tool-panel" data-panel="notifications">
+                <div class="tool-card">
+                    <div class="panel-title-row">
+                        <h3>🔔 Мои уведомления</h3>
+                        <div class="row-actions">
+                            <button onclick="markNotificationsRead()">Прочитано</button>
+                            <button class="btn-danger-soft compact" onclick="clearNotifications()">Очистить</button>
+                        </div>
+                    </div>
+                    <p class="muted">Здесь отображаются персональные события: назначение задачи, вступление в команду, дедлайны.</p>
+                    <div id="personalNotifications" class="mini-list"></div>
+                </div>
+            </section>
+
+            <section class="tool-panel" data-panel="events">
+                <div class="tool-card">
+                    <h3>🧾 История событий</h3>
+                    <p class="muted">Audit log: создание, обновление, перемещение, queue-processing, invite, правила автоматизации.</p>
+                    <div id="eventsList" class="event-list"></div>
+                </div>
+            </section>
+
+            {% if current_user.role == 'admin' %}
+            <section class="tool-panel" data-panel="columns">
+                <div class="tool-card">
+                    <h3>🧱 Колонки</h3>
+                    <div class="inline-form">
+                        <input type="text" id="newColumnName" placeholder="Например: Review">
+                        <button onclick="addColumn()">Добавить</button>
+                    </div>
+                    <div id="columnsAdminList" class="mini-list"></div>
+                </div>
+            </section>
+
+            <section class="tool-panel" data-panel="rules">
+                <div class="tool-card">
+                    <h3>⚙️ Правила автоматизации</h3>
+                    <p class="muted">Формула: событие → условие → действие. Например: если задача critical, переместить в In Progress.</p>
+                    <div class="rules-grid">
+                        <input type="text" id="ruleName" placeholder="Название правила">
+                        <select id="ruleTrigger">
+                            <option value="task_created">Когда задача создана</option>
+                            <option value="task_updated">Когда задача изменена</option>
+                            <option value="task_moved">Когда задача перемещена</option>
+                            <option value="incoming_task">Когда пришла из очереди</option>
+                        </select>
+                        <select id="ruleField">
+                            <option value="always">Всегда</option>
+                            <option value="priority">Приоритет</option>
+                            <option value="column">Колонка key</option>
+                            <option value="tags">Теги</option>
+                            <option value="title">Название</option>
+                            <option value="deadline">Дедлайн</option>
+                        </select>
+                        <select id="ruleOperator">
+                            <option value="equals">равно</option>
+                            <option value="contains">содержит</option>
+                            <option value="not_equals">не равно</option>
+                        </select>
+                        <input type="text" id="ruleValue" placeholder="critical / bug / overdue">
+                        <select id="ruleAction">
+                            <option value="move_column">Переместить в колонку</option>
+                            <option value="send_notification">Уведомить</option>
+                            <option value="set_priority">Изменить приоритет</option>
+                            <option value="add_tag">Добавить тег</option>
+                        </select>
+                        <input type="text" id="ruleActionValue" placeholder="in_progress / Текст / critical">
+                    </div>
+                    <button class="btn-purple" onclick="addRule()">+ Создать правило</button>
+                    <div id="rulesList" class="mini-list"></div>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="tool-panel" data-panel="guide">
+                <article class="guide-article">
+                    <h3>📘 Как пользоваться NineCell</h3>
+                    <p class="lead">Главное пространство — доска. Все дополнительные функции живут в одной боковой панели, чтобы задачи всегда оставались перед глазами.</p>
+                    <div class="guide-grid">
+                        <div class="guide-card"><span>1</span><strong>Создайте команду</strong><p>Откройте “Команды”, создайте команду и добавьте людей вручную или через invite-ссылку.</p></div>
+                        <div class="guide-card"><span>2</span><strong>Добавьте задачу</strong><p>Нажмите круглый плюс справа снизу или кнопку “Новая задача”.</p></div>
+                        <div class="guide-card"><span>3</span><strong>Назначьте исполнителя</strong><p>Выберите команду и участника. Он увидит задачу на своей доске.</p></div>
+                        <div class="guide-card"><span>4</span><strong>Проверьте очередь</strong><p>Через “Входящий поток” отправьте задачу в RabbitMQ и посмотрите, как worker создаёт карточку.</p></div>
+                    </div>
+                    <div class="flow-diagram">
+                        <div>API / Telegram</div><span>→</span><div>PostgreSQL Outbox</div><span>→</span><div>RabbitMQ</div><span>→</span><div>Worker</div><span>→</span><div>Kanban + Socket.IO</div>
+                    </div>
+                    <h4>Что показать жюри</h4>
+                    <ul>
+                        <li>Откройте два браузера: admin и user. Создайте задачу — она появится у обоих без перезагрузки.</li>
+                        <li>Создайте invite-ссылку, войдите другим аккаунтом и вступите в команду.</li>
+                        <li>Отправьте входящую задачу в очередь и откройте RabbitMQ Queues and Streams.</li>
+                        <li>Создайте правило автоматизации и покажите, как оно меняет карточку.</li>
+                    </ul>
+                </article>
+            </section>
+        </aside>
+    </div>
+
+    <button class="fab" onclick="openTaskComposer()" title="Добавить задачу">＋</button>
+
+    <div id="taskComposerModal" class="modal hidden">
+        <div class="modal-card composer-card">
+            <div class="modal-header">
+                <div>
+                    <span class="drawer-kicker">Быстрое создание</span>
+                    <h3>Новая задача</h3>
+                </div>
+                <button class="icon-button" onclick="closeTaskComposer()">✕</button>
+            </div>
+            <div class="grid-form">
+                <input type="text" id="titleInput" placeholder="Название задачи">
+                <select id="priorityInput">
+                    <option value="low">🟢 Низкий</option>
+                    <option value="medium" selected>🟠 Средний</option>
+                    <option value="high">🔴 Высокий</option>
+                    <option value="critical">🟣 Критический</option>
+                </select>
+                <input type="text" id="tagsInput" placeholder="Теги: bug, urgent">
+                <input type="date" id="deadlineInput">
+                <select id="teamInput" onchange="refreshAssigneeSelect('teamInput', 'assigneeInput')"></select>
+                <select id="assigneeInput"></select>
+                <textarea id="descInput" placeholder="Описание" rows="3"></textarea>
+            </div>
+            <button class="btn-primary full" onclick="addTask()">Создать задачу</button>
+        </div>
+    </div>
 
     <div id="taskModal" class="modal hidden">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>✏️ Редактировать задачу</h3>
-                <button onclick="closeEditModal()">✕</button>
+                <div>
+                    <span class="drawer-kicker">Карточка задачи</span>
+                    <h3>Редактировать задачу</h3>
+                </div>
+                <button class="icon-button" onclick="closeEditModal()">✕</button>
             </div>
             <input type="hidden" id="editTaskId">
+            <input type="hidden" id="editVersion">
             <label>Название</label>
             <input type="text" id="editTitle">
             <label>Описание</label>
@@ -190,6 +752,20 @@
         </div>
     </div>
 
+
+    <div id="activityModal" class="modal hidden">
+        <div class="modal-card activity-card">
+            <div class="modal-header">
+                <div>
+                    <span class="drawer-kicker">Activity Feed</span>
+                    <h3 id="activityTitle">История задачи</h3>
+                </div>
+                <button class="icon-button" onclick="closeActivityModal()">✕</button>
+            </div>
+            <div id="activityContent" class="activity-feed"></div>
+        </div>
+    </div>
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
@@ -203,6 +779,64 @@
             high: "Высокий",
             critical: "Критический"
         };
+
+
+        function applyLayoutPreferences() {
+            document.body.classList.toggle("sidebar-collapsed", localStorage.getItem("sidebarCollapsed") === "true");
+            const savedTool = localStorage.getItem("activeTool") || "filters";
+            openTool(savedTool, false);
+        }
+
+        function toggleSidebar() {
+            const next = localStorage.getItem("sidebarCollapsed") === "true" ? "false" : "true";
+            localStorage.setItem("sidebarCollapsed", next);
+            document.body.classList.toggle("sidebar-collapsed", next === "true");
+        }
+
+        function openTool(tool, remember = true) {
+            if (!tool) tool = "filters";
+            document.body.classList.add("drawer-open");
+            document.querySelectorAll(".nav-item").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.tool === tool);
+            });
+            document.querySelectorAll(".tool-panel").forEach(panel => {
+                panel.classList.toggle("active", panel.dataset.panel === tool);
+            });
+            const titleMap = {
+                filters: "Фильтры и поиск",
+                teams: "Команды и приглашения",
+                queue: "Входящий поток",
+                health: "System Health",
+                notifications: "Уведомления",
+                events: "История событий",
+                columns: "Колонки",
+                rules: "Автоматизация",
+                guide: "Инструкция"
+            };
+            const drawerTitle = document.getElementById("drawerTitle");
+            if (drawerTitle) drawerTitle.innerText = titleMap[tool] || "Меню";
+            if (remember) localStorage.setItem("activeTool", tool);
+        }
+
+        function closeToolDrawer() {
+            document.body.classList.remove("drawer-open");
+        }
+
+        function openTaskComposer() {
+            document.getElementById("taskComposerModal")?.classList.remove("hidden");
+            setTimeout(() => document.getElementById("titleInput")?.focus(), 50);
+        }
+
+        function closeTaskComposer() {
+            document.getElementById("taskComposerModal")?.classList.add("hidden");
+        }
+
+        function initCollapsiblePanels() {
+            // Старые версии проекта добавляли маленькие сворачиваемые блоки.
+            // В новой UX-версии вместо множества блоков используется один боковой drawer.
+        }
+
+        applyLayoutPreferences();
 
         socket.on("state_changed", async () => {
             state = await api("/api/state");
@@ -256,9 +890,68 @@
             setTimeout(() => notif.remove(), 250);
         }
 
+        function renderStats() {
+            const stats = state.stats || {};
+            const items = [
+                ["Всего задач", stats.tasks_total ?? 0, "📌"],
+                ["Готово", stats.tasks_done ?? 0, "✅"],
+                ["Просрочено", stats.tasks_overdue ?? 0, "⏰"],
+                ["Critical", stats.tasks_critical ?? 0, "🔥"],
+                ["Команд", stats.teams_total ?? 0, "👥"],
+                ["Очередь", stats.incoming_pending ?? 0, "📥"]
+            ];
+            document.getElementById("statsGrid").innerHTML = items.map(([label, value, icon]) => `
+                <div class="stat-card">
+                    <div class="stat-icon">${icon}</div>
+                    <div>
+                        <strong>${escapeHtml(value)}</strong>
+                        <span>${escapeHtml(label)}</span>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById("personalNotifications");
+            if (!list) return;
+            const notifications = state.notifications || [];
+            if (notifications.length === 0) {
+                list.innerHTML = `<div class="mini-item empty-state">Новых уведомлений пока нет.</div>`;
+                return;
+            }
+            list.innerHTML = notifications.map(item => `
+                <div class="mini-item notification-item ${item.is_read ? "read" : "unread"}">
+                    <div class="row-between">
+                        <strong>${item.is_read ? "○" : "●"} ${escapeHtml(item.message)}</strong>
+                        <small>${escapeHtml(item.created_at)}</small>
+                    </div>
+                    ${item.task_id ? `<small>Задача #${item.task_id}</small>` : ""}
+                </div>
+            `).join("");
+        }
+
+        async function markNotificationsRead() {
+            await api("/api/notifications/mark_read", "POST", {});
+        }
+
+        async function clearNotifications() {
+            const notifications = state.notifications || [];
+            if (notifications.length === 0) {
+                showNotification("Уведомлений пока нет", "info");
+                return;
+            }
+
+            const ok = confirm("Очистить все ваши уведомления?\n\nОни удалятся только у текущего аккаунта.");
+            if (!ok) return;
+
+            await api("/api/notifications/clear", "POST", {});
+            showNotification("Уведомления очищены", "success");
+        }
+
         function resetFilters() {
             document.getElementById("searchFilter").value = "";
             document.getElementById("priorityFilter").value = "";
+            document.getElementById("scopeFilter").value = "";
             document.getElementById("tagFilter").value = "";
             document.getElementById("teamFilter").value = "";
             document.getElementById("assigneeFilter").value = "";
@@ -268,6 +961,7 @@
         function getFilteredTasks() {
             const search = document.getElementById("searchFilter").value.trim().toLowerCase();
             const priority = document.getElementById("priorityFilter").value;
+            const scope = document.getElementById("scopeFilter")?.value || "";
             const tag = document.getElementById("tagFilter").value.trim().toLowerCase();
             const teamId = document.getElementById("teamFilter").value;
             const assigneeId = document.getElementById("assigneeFilter").value;
@@ -277,6 +971,11 @@
                 const tags = (task.tags || "").toLowerCase();
                 if (search && !text.includes(search)) return false;
                 if (priority && task.priority !== priority) return false;
+                if (scope === "mine" && Number(task.assignee_id || task.creator_id || 0) !== CURRENT_USER_ID && Number(task.creator_id || 0) !== CURRENT_USER_ID) return false;
+                if (scope === "unassigned" && task.assignee_id) return false;
+                const today = new Date().toISOString().slice(0, 10);
+                if (scope === "overdue" && !(task.deadline && task.deadline < today && task.column_key !== "done")) return false;
+                if (scope === "today" && task.deadline !== today) return false;
                 if (tag && !tags.includes(tag)) return false;
                 if (teamId && String(task.team_id || "") !== teamId) return false;
                 if (assigneeId && String(task.assignee_id || "") !== assigneeId) return false;
@@ -325,6 +1024,7 @@
             const card = document.createElement("div");
             card.className = "card priority-" + task.priority;
             card.dataset.taskId = task.id;
+            card.dataset.version = task.version || 1;
 
             const tags = (task.tags || "")
                 .split(",")
@@ -341,6 +1041,7 @@
 
             const editButtons = task.can_edit ? `
                 <div class="card-actions">
+                    <button onclick="openActivity(${task.id})" title="История">🧾</button>
                     <button onclick="openEditModal(${task.id})" title="Редактировать">✏️</button>
                     <button onclick="deleteTask(${task.id})" title="Удалить">🗑️</button>
                 </div>` : "";
@@ -349,17 +1050,20 @@
             const assigneeHtml = task.assignee ? `<div class="team-meta">🙋 Исполнитель: ${escapeHtml(task.assignee)}</div>` : `<div class="team-meta muted-small">🙋 Не назначена</div>`;
 
             card.innerHTML = `
-                ${editButtons}
-                <div class="card-header">
-                    <strong>${escapeHtml(task.title)}</strong>
-                    <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
+                <div class="card-header task-card-header">
+                    <strong class="task-title">${escapeHtml(task.title)}</strong>
+
+                    <div class="task-card-side">
+                        ${editButtons}
+                        <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
+                    </div>
                 </div>
                 ${task.description ? `<p class="card-desc">${escapeHtml(task.description)}</p>` : ""}
                 ${tags ? `<div class="tags">${tags}</div>` : ""}
                 ${teamHtml}
                 ${assigneeHtml}
                 ${deadlineHtml}
-                <div class="card-meta">#${task.id} · создал(а): ${escapeHtml(task.creator || "system")}</div>
+                <div class="card-meta">#${task.id} · v${task.version || 1} · создана: ${escapeHtml(task.created_at || "")} · создал(а): ${escapeHtml(task.creator || "system")}</div>
             `;
             return card;
         }
@@ -383,10 +1087,15 @@
             document.getElementById("descInput").value = "";
             document.getElementById("tagsInput").value = "";
             document.getElementById("deadlineInput").value = "";
+            closeTaskComposer();
         }
 
         async function moveTask(taskId, columnId) {
-            await api(`/move_task/${taskId}`, "POST", { column_id: Number(columnId) });
+            const task = state.tasks.find(t => String(t.id) === String(taskId));
+            await api(`/move_task/${taskId}`, "POST", {
+                column_id: Number(columnId),
+                version: task?.version || 1
+            });
         }
 
         async function deleteTask(taskId) {
@@ -399,6 +1108,7 @@
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
             document.getElementById("editTaskId").value = task.id;
+            document.getElementById("editVersion").value = task.version || 1;
             document.getElementById("editTitle").value = task.title;
             document.getElementById("editDescription").value = task.description || "";
             document.getElementById("editPriority").value = task.priority;
@@ -429,7 +1139,8 @@
                 deadline: document.getElementById("editDeadline").value,
                 team_id: document.getElementById("editTeam").value || null,
                 assignee_id: document.getElementById("editAssignee").value || null,
-                column_id: Number(document.getElementById("editColumn").value)
+                column_id: Number(document.getElementById("editColumn").value),
+                version: Number(document.getElementById("editVersion").value || 1)
             });
             closeEditModal();
         }
@@ -460,7 +1171,7 @@
                 showNotification("Введите название входящей задачи", "warning");
                 return;
             }
-            await api("/api/incoming_tasks", "POST", {
+            await api("/api/incoming_tasks/ui", "POST", {
                 external_id: document.getElementById("incomingExternalId").value,
                 title,
                 tags: document.getElementById("incomingTags").value,
@@ -472,14 +1183,103 @@
             document.getElementById("incomingTitle").value = "";
         }
 
+        function statusBadge(status) {
+            const map = {
+                queued: "queued",
+                pending: "pending",
+                processed: "processed",
+                duplicate: "duplicate",
+                error: "error"
+            };
+            return `<span class="status-pill ${map[status] || "pending"}">${escapeHtml(status || "unknown")}</span>`;
+        }
+
         function renderIncoming() {
             const list = document.getElementById("incomingList");
-            list.innerHTML = state.incoming.map(item => `
-                <div class="mini-item">
-                    <span>#${item.id} · ${escapeHtml(item.status)}</span>
-                    <small>${escapeHtml(item.external_id || "без external_id")}${item.error ? " · " + escapeHtml(item.error) : ""}</small>
+            if (!list) return;
+            const incoming = state.incoming || [];
+            if (incoming.length === 0) {
+                list.innerHTML = `<div class="mini-item empty-state">Входящих задач пока нет.</div>`;
+                return;
+            }
+            list.innerHTML = incoming.map(item => `
+                <div class="mini-item incoming-item ${escapeHtml(item.status)}">
+                    <div class="row-between">
+                        <strong>#${item.id} · ${statusBadge(item.status)}</strong>
+                        ${IS_ADMIN && ["error", "duplicate", "processed"].includes(item.status) ? `<button class="btn-soft compact" onclick="retryIncoming(${item.id})">Retry</button>` : ""}
+                    </div>
+                    <small>${escapeHtml(item.source || "api")} · ${escapeHtml(item.external_id || "без external_id")}</small>
+                    ${item.error ? `<small class="error-text">${escapeHtml(item.error)}</small>` : ""}
+                    ${item.task_id ? `<small>Создана задача #${item.task_id}</small>` : ""}
                 </div>
             `).join("");
+        }
+
+        async function retryIncoming(id) {
+            if (!confirm("Повторить обработку входящей задачи через RabbitMQ?")) return;
+            await api(`/api/incoming_tasks/${id}/retry`, "POST", {});
+            showNotification("Задача снова отправлена в очередь", "success");
+        }
+
+        async function refreshHealth() {
+            if (!IS_ADMIN) return;
+            const panel = document.getElementById("healthPanel");
+            const recs = document.getElementById("healthRecommendations");
+            if (!panel) return;
+            panel.innerHTML = `<div class="mini-item">Загрузка статуса...</div>`;
+            const health = await api("/api/health");
+            const serviceOk = health.services?.overall === "ok";
+            const rabbitQueues = health.rabbitmq?.queues || {};
+            const queueHtml = Object.entries(rabbitQueues).map(([name, info]) => `
+                <div class="health-row">
+                    <span>${escapeHtml(name)}</span>
+                    <b>${info.messages ?? "?"} msg</b>
+                    <small>${info.consumers ?? "?"} consumers</small>
+                </div>
+            `).join("");
+            panel.innerHTML = `
+                <div class="health-card ${serviceOk ? "ok" : "warn"}"><strong>${serviceOk ? "✅" : "⚠️"} Overall</strong><span>${escapeHtml(health.services?.overall || "unknown")}</span></div>
+                <div class="health-card ${health.database?.ok ? "ok" : "bad"}"><strong>PostgreSQL</strong><span>${escapeHtml(health.database?.message || "-")}</span></div>
+                <div class="health-card ${health.rabbitmq?.ok ? "ok" : "bad"}"><strong>RabbitMQ</strong><span>${health.rabbitmq?.ok ? "доступен" : escapeHtml(health.rabbitmq?.error || "ошибка")}</span></div>
+                <div class="health-card ${health.redis?.ok === false ? "bad" : "ok"}"><strong>Redis</strong><span>${escapeHtml(health.redis?.message || "-")}</span></div>
+                <div class="health-card wide"><strong>Очереди RabbitMQ</strong>${queueHtml || "<span>Нет данных</span>"}</div>
+                <div class="health-card wide"><strong>Счётчики</strong><pre>${escapeHtml(JSON.stringify(health.counters || {}, null, 2))}</pre></div>
+            `;
+            recs.innerHTML = (health.recommendations || []).length
+                ? (health.recommendations || []).map(r => `<div class="mini-item warning">💡 ${escapeHtml(r)}</div>`).join("")
+                : `<div class="mini-item success">✅ Критичных рекомендаций нет.</div>`;
+        }
+
+        async function runPrimeDemo() {
+            if (!IS_ADMIN) return;
+            if (!confirm("Создать Prime demo-данные: команду, задачи, правило и входящую задачу в RabbitMQ?")) return;
+            await api("/api/demo/prime", "POST", {});
+            openTool("health");
+            await refreshHealth();
+            showNotification("Prime demo готов. Проверь доску, очередь и события.", "success");
+        }
+
+        async function openActivity(taskId) {
+            const modal = document.getElementById("activityModal");
+            const title = document.getElementById("activityTitle");
+            const content = document.getElementById("activityContent");
+            modal.classList.remove("hidden");
+            content.innerHTML = `<div class="mini-item">Загружаю историю...</div>`;
+            const result = await api(`/api/tasks/${taskId}/activity`);
+            title.innerText = `История #${result.task.id}: ${result.task.title}`;
+            content.innerHTML = result.events.length
+                ? result.events.map(event => `
+                    <div class="activity-item">
+                        <strong>${escapeHtml(event.type)}</strong>
+                        <span>${escapeHtml(event.created_at)} · ${escapeHtml(event.user)}</span>
+                        <pre>${escapeHtml(JSON.stringify(event.payload || {}, null, 2))}</pre>
+                    </div>
+                `).join("")
+                : `<div class="mini-item empty-state">Событий по задаче пока нет.</div>`;
+        }
+
+        function closeActivityModal() {
+            document.getElementById("activityModal")?.classList.add("hidden");
         }
 
         function renderTeamSelect(selectId, selectedValue = "", includeEmpty = true) {
@@ -545,57 +1345,267 @@
             }
         }
 
+        function isTeamOpen(teamId) {
+            const saved = localStorage.getItem("team-open-" + teamId);
+            return saved === null ? true : saved === "true";
+        }
+
+        function toggleTeamCard(teamId) {
+            localStorage.setItem("team-open-" + teamId, String(!isTeamOpen(teamId)));
+            renderTeams();
+        }
+
+        function expandAllTeams() {
+            (state.teams || []).forEach(team => {
+                localStorage.setItem("team-open-" + team.id, "true");
+            });
+            renderTeams();
+        }
+
+        function collapseAllTeams() {
+            (state.teams || []).forEach(team => {
+                localStorage.setItem("team-open-" + team.id, "false");
+            });
+            renderTeams();
+        }
+
         function renderTeams() {
             const list = document.getElementById("teamsList");
             if (!list) return;
+
             if (!state.teams || state.teams.length === 0) {
-                list.innerHTML = `<div class="mini-item"><span>Пока нет команд. Создайте первую команду.</span></div>`;
+                list.innerHTML = `
+                    <div class="team-empty-state">
+                        <div class="empty-icon">👥</div>
+                        <strong>Команд пока нет</strong>
+                        <span>Создайте команду. После этого можно будет приглашать людей и назначать задачи участникам.</span>
+                    </div>
+                `;
                 return;
             }
 
-            list.innerHTML = state.teams.map(team => {
-                const membersHtml = (team.members || []).map(member => `
-                    <div class="member-row">
-                        <span>${member.role === "admin" ? "🛡️" : "👤"} ${escapeHtml(member.username)}</span>
-                        <small>${escapeHtml(member.role)}</small>
-                        ${team.current_user_can_manage ? `
-                            <button onclick="changeMemberRole(${team.id}, ${member.user_id}, '${member.role === "admin" ? "member" : "admin"}')">${member.role === "admin" ? "Сделать member" : "Сделать admin"}</button>
-                            <button onclick="removeTeamMember(${team.id}, ${member.user_id})">Удалить</button>
-                        ` : ""}
+            const toolbar = `
+                <div class="teams-toolbar">
+                    <div>
+                        <strong>👥 Команды</strong>
+                        <span>${state.teams.length} всего</span>
+                    </div>
+
+                    <div class="teams-toolbar-actions">
+                        <button class="btn-soft compact" onclick="expandAllTeams()">Развернуть все</button>
+                        <button class="btn-soft compact" onclick="collapseAllTeams()">Свернуть все</button>
+                    </div>
+                </div>
+            `;
+
+            const cards = state.teams.map(team => {
+                const canManage = Boolean(team.current_user_can_manage);
+                const isOpen = isTeamOpen(team.id);
+                const members = team.members || [];
+                const memberIds = new Set(members.map(member => String(member.user_id)));
+                const availableUsers = (state.users || []).filter(user => !memberIds.has(String(user.id)));
+
+                const adminsCount = members.filter(member => member.role === "admin").length;
+                const membersCount = members.length;
+
+                const membersHtml = members.map(member => `
+                    <div class="team-member-row">
+                        <div class="member-main">
+                            <span class="member-avatar">${member.role === "admin" ? "🛡️" : "👤"}</span>
+                            <div>
+                                <strong>${escapeHtml(member.username)}</strong>
+                                <small>${member.role === "admin" ? "Админ команды" : "Участник команды"}</small>
+                            </div>
+                        </div>
+
+                        ${canManage ? `
+                            <div class="member-actions">
+                                <button class="btn-soft compact" onclick="changeMemberRole(${team.id}, ${member.user_id}, '${member.role === "admin" ? "member" : "admin"}')">
+                                    ${member.role === "admin" ? "Сделать member" : "Сделать admin"}
+                                </button>
+                                <button class="btn-danger-soft compact" onclick="removeTeamMember(${team.id}, ${member.user_id})">
+                                    Удалить
+                                </button>
+                            </div>
+                        ` : `
+                            <span class="role-pill ${member.role === "admin" ? "admin" : "member"}">
+                                ${escapeHtml(member.role)}
+                            </span>
+                        `}
                     </div>
                 `).join("");
 
-                const addMemberHtml = team.current_user_can_manage ? `
-                    <div class="member-add-row">
-                        <select id="teamUser-${team.id}">
-                            ${(state.users || []).map(user => `<option value="${user.id}">${escapeHtml(user.username)} (${escapeHtml(user.role)})</option>`).join("")}
-                        </select>
-                        <select id="teamRole-${team.id}">
-                            <option value="member">member</option>
-                            <option value="admin">admin</option>
-                        </select>
-                        <button onclick="addTeamMember(${team.id})">Добавить</button>
-                    </div>
-                    <div class="small-actions team-actions">
-                        <button onclick="renameTeam(${team.id}, '${escapeHtml(team.name)}', '${escapeHtml(team.description || "")}')">Переим.</button>
-                        <button onclick="deleteTeam(${team.id})">Удалить команду</button>
+                const addMemberHtml = canManage ? `
+                    <div class="team-admin-section">
+                        <div class="section-title">➕ Добавить участника</div>
+                        <p class="muted-small">
+                            Если пользователь уже зарегистрирован, добавьте его напрямую. Если нет — создайте invite-ссылку ниже.
+                        </p>
+
+                        <div class="team-action-row">
+                            <select id="teamUser-${team.id}">
+                                ${availableUsers.length
+                                    ? availableUsers.map(user => `<option value="${user.id}">${escapeHtml(user.username)} · ${escapeHtml(user.role)}</option>`).join("")
+                                    : `<option value="">Нет доступных пользователей</option>`
+                                }
+                            </select>
+
+                            <select id="teamRole-${team.id}">
+                                <option value="member">member</option>
+                                <option value="admin">admin</option>
+                            </select>
+
+                            <button class="btn-soft compact" onclick="addTeamMember(${team.id})" ${availableUsers.length ? "" : "disabled"}>
+                                Добавить
+                            </button>
+                        </div>
                     </div>
                 ` : "";
 
-                return `
-                    <div class="mini-item team-item">
-                        <div class="row-between">
-                            <div>
-                                <strong>👥 ${escapeHtml(team.name)}</strong>
-                                <small>${escapeHtml(team.description || "без описания")} · создал(а): ${escapeHtml(team.created_by)}</small>
-                            </div>
-                            ${team.current_user_can_manage ? `<span class="team-admin-badge">admin</span>` : `<span class="team-member-badge">member</span>`}
+                const inviteHtml = canManage ? `
+                    <div class="team-admin-section">
+                        <div class="section-title">🔗 Invite-ссылка</div>
+                        <p class="muted-small">
+                            Скопируйте ссылку и отправьте человеку в Telegram/чат. После входа он попадёт в эту команду.
+                        </p>
+
+                        <div class="team-action-row invite-controls">
+                            <select id="inviteRole-${team.id}">
+                                <option value="member">Пригласить как member</option>
+                                <option value="admin">Пригласить как admin</option>
+                            </select>
+
+                            <input id="inviteMax-${team.id}" type="number" min="1" max="500" value="25" title="Сколько раз можно использовать ссылку">
+                            <input id="inviteTtl-${team.id}" type="number" min="1" max="90" value="14" title="Сколько дней действует ссылка">
+
+                            <button class="btn-primary compact" onclick="createInvite(${team.id})">
+                                Создать ссылку
+                            </button>
                         </div>
-                        <div class="members-list">${membersHtml}</div>
-                        ${addMemberHtml}
+
+                        <div id="invites-${team.id}" class="invites-list"></div>
+                    </div>
+                ` : "";
+
+                const manageHtml = canManage ? `
+                    <div class="team-admin-section team-danger-zone">
+                        <div class="section-title">⚙️ Управление командой</div>
+
+                        <div class="team-toolbar">
+                            <button class="btn-soft compact" onclick="editTeam(${team.id})">
+                                ✏️ Редактировать
+                            </button>
+
+                            <button class="btn-danger-soft compact" onclick="deleteTeam(${team.id})">
+                                🗑️ Удалить команду
+                            </button>
+                        </div>
+
+                        <p class="muted-small">
+                            При удалении команды задачи не удаляются. Они станут личными/без команды, а исполнители будут сняты.
+                        </p>
+                    </div>
+                ` : `
+                    <div class="team-readonly-note">
+                        Вы участник этой команды. Приглашать людей, менять роли и удалять команду может только админ команды.
                     </div>
                 `;
+
+                return `
+                    <article class="team-management-card ${isOpen ? "" : "is-collapsed"}">
+                        <button class="team-card-toggle" onclick="toggleTeamCard(${team.id})">
+                            <div class="team-card-main">
+                                <span class="team-chevron">${isOpen ? "▾" : "▸"}</span>
+
+                                <div>
+                                    <div class="team-title-line">
+                                        <strong>👥 ${escapeHtml(team.name)}</strong>
+                                        <span class="team-count">${membersCount} участник${membersCount === 1 ? "" : membersCount < 5 ? "а" : "ов"}</span>
+                                        <span class="team-count">${adminsCount} admin</span>
+                                    </div>
+
+                                    <small>
+                                        ${escapeHtml(team.description || "Описание не указано")}
+                                        · создал(а): ${escapeHtml(team.created_by || "system")}
+                                    </small>
+                                </div>
+                            </div>
+
+                            ${canManage
+                                ? `<span class="team-admin-badge">вы админ</span>`
+                                : `<span class="team-member-badge">member</span>`
+                            }
+                        </button>
+
+                        <div class="team-card-body">
+                            <div class="team-admin-section">
+                                <div class="section-title">Участники</div>
+                                <div class="members-list team-members-list">
+                                    ${membersHtml || `<span class="muted-small">Пока нет участников</span>`}
+                                </div>
+                            </div>
+
+                            ${addMemberHtml}
+                            ${inviteHtml}
+                            ${manageHtml}
+                        </div>
+                    </article>
+                `;
             }).join("");
+
+            list.innerHTML = toolbar + cards;
+
+            renderTeamInvites();
+        }
+
+        function renderTeamInvites() {
+            (state.teams || []).forEach(team => {
+                const box = document.getElementById(`invites-${team.id}`);
+                if (!box) return;
+                const invites = (state.invites || []).filter(invite => invite.team_id === team.id);
+                if (invites.length === 0) {
+                    box.innerHTML = `<div class="invite-empty">Пока нет активных ссылок. Создайте ссылку и отправьте её человеку в Telegram или другой чат.</div>`;
+                    return;
+                }
+                box.innerHTML = invites.map(invite => `
+                    <div class="invite-card ${invite.active ? "" : "disabled"}">
+                        <div class="invite-meta">
+                            <strong>${invite.active ? "🟢 Активна" : "⚪ Отключена"} · роль ${escapeHtml(invite.role)}</strong>
+                            <small>Использований: ${invite.uses}/${invite.max_uses} · действует до: ${escapeHtml(invite.expires_at || "без срока")}</small>
+                        </div>
+                        <input class="invite-url" readonly value="${escapeHtml(invite.url)}" onclick="this.select()">
+                        <div class="invite-actions">
+                            <button class="btn-soft" onclick="copyInvite('${escapeHtml(invite.url)}')">Скопировать</button>
+                            ${invite.active ? `<button class="btn-danger-soft" onclick="disableInvite(${invite.id})">Отключить</button>` : ""}
+                        </div>
+                    </div>
+                `).join("");
+            });
+        }
+
+        async function createInvite(teamId) {
+            const role = document.getElementById(`inviteRole-${teamId}`)?.value || "member";
+            const maxUses = Number(document.getElementById(`inviteMax-${teamId}`)?.value || 25);
+            const ttlDays = Number(document.getElementById(`inviteTtl-${teamId}`)?.value || 14);
+            const result = await api(`/create_invite/${teamId}`, "POST", { role, max_uses: maxUses, ttl_days: ttlDays });
+            if (result.invite?.url) {
+                await copyInvite(result.invite.url);
+                showNotification("Invite-ссылка создана и скопирована", "success");
+            }
+        }
+
+        async function disableInvite(inviteId) {
+            if (!confirm("Отключить эту invite-ссылку? Новые пользователи уже не смогут по ней вступить.")) return;
+            await api(`/disable_invite/${inviteId}`, "POST", {});
+        }
+
+        async function copyInvite(url) {
+            try {
+                await navigator.clipboard.writeText(url);
+                showNotification("Invite-ссылка скопирована", "success");
+            } catch (e) {
+                prompt("Скопируйте ссылку", url);
+            }
         }
 
         async function addTeam() {
@@ -611,21 +1621,55 @@
             descInput.value = "";
         }
 
-        async function renameTeam(id, oldName, oldDescription) {
-            const name = prompt("Новое название команды", oldName);
-            if (!name) return;
-            const description = prompt("Описание команды", oldDescription || "") ?? oldDescription;
-            await api(`/update_team/${id}`, "POST", { name, description });
+        function getTeamById(id) {
+            return (state.teams || []).find(team => String(team.id) === String(id));
+        }
+
+        async function editTeam(id) {
+            const team = getTeamById(id);
+            if (!team) {
+                showNotification("Команда не найдена", "warning");
+                return;
+            }
+
+            const name = prompt("Новое название команды", team.name || "");
+            if (name === null) return;
+            if (!name.trim()) {
+                showNotification("Название команды не может быть пустым", "warning");
+                return;
+            }
+
+            const description = prompt("Описание команды", team.description || "");
+            if (description === null) return;
+
+            await api(`/update_team/${id}`, "POST", {
+                name: name.trim(),
+                description: description.trim()
+            });
+
+            showNotification("Команда обновлена", "success");
+        }
+
+        async function renameTeamFromState(id) {
+            return editTeam(id);
         }
 
         async function deleteTeam(id) {
-            if (!confirm("Удалить команду? Задачи останутся, но будут без команды и без исполнителя.")) return;
-            await api(`/delete_team/${id}`, "POST");
+            const team = getTeamById(id);
+            const name = team?.name || "эту команду";
+            const ok = confirm(`Удалить команду «${name}»?\n\nЗадачи НЕ удалятся, но станут личными/без команды, а исполнители будут сняты.`);
+            if (!ok) return;
+            await api(`/delete_team/${id}`, "POST", {});
         }
 
         async function addTeamMember(teamId) {
+            const userSelect = document.getElementById(`teamUser-${teamId}`);
+            if (!userSelect || !userSelect.value) {
+                showNotification("Нет пользователя для добавления. Отправьте invite-ссылку или зарегистрируйте пользователя.", "warning");
+                return;
+            }
             await api(`/add_team_member/${teamId}`, "POST", {
-                user_id: document.getElementById(`teamUser-${teamId}`).value,
+                user_id: userSelect.value,
                 role: document.getElementById(`teamRole-${teamId}`).value
             });
         }
@@ -635,7 +1679,7 @@
         }
 
         async function removeTeamMember(teamId, userId) {
-            if (!confirm("Удалить участника из команды?")) return;
+            if (!confirm("Удалить участника из команды? Его назначенные задачи в этой команде останутся без исполнителя.")) return;
             await api(`/remove_team_member/${teamId}/${userId}`, "POST");
         }
 
@@ -730,16 +1774,22 @@
         }
 
         function renderAll() {
+            initCollapsiblePanels();
+            renderStats();
             renderTaskFormSelects();
             renderBoard();
+            renderNotifications();
             renderEvents();
             renderIncoming();
+            if (IS_ADMIN) refreshHealth().catch(() => {});
             renderTeams();
             renderRules();
             renderColumnsAdmin();
         }
 
         renderAll();
+        initCollapsiblePanels();
+    
     </script>
 </body>
 </html>

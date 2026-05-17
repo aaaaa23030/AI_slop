@@ -2,12 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Вход — Kanban Event System</title>
+    <title>Вход — NineCell</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/ninecell-mark.svg') }}">
 </head>
 <body class="auth-body">
     <div class="auth-card">
-        <h1>🚀 Kanban Event System</h1>
+        <div class="auth-logo-wrap"><img class="auth-logo" src="{{ url_for('static', filename='img/ninecell-logo.svg') }}" alt="NineCell"></div>
+        <h1>Вход в NineCell</h1>
         <p class="muted">Войдите, чтобы открыть доску</p>
 
         {% if error %}
@@ -23,6 +26,30 @@
 
             <button type="submit" class="btn-primary full">Войти</button>
         </form>
+
+
+        <div class="auth-divider"><span>или</span></div>
+
+        <div class="telegram-auth-box">
+            <h3>Вход через Telegram</h3>
+            <p class="muted">Локальный способ для хакатона: напишите боту <code>/login</code>, получите 6-значный код и вставьте его здесь.</p>
+            {% if telegram_bot_username %}
+                <a class="btn-telegram full" href="https://t.me/{{ telegram_bot_username }}" target="_blank" rel="noopener">Открыть @{{ telegram_bot_username }}</a>
+            {% else %}
+                <div class="alert alert-info">Укажите <code>TELEGRAM_BOT_USERNAME</code> в <code>.env</code>, чтобы показать ссылку на бота.</div>
+            {% endif %}
+            <form method="post" action="{{ url_for('telegram_code_login') }}" class="auth-form compact-auth-form">
+                <label>Код из Telegram</label>
+                <div class="telegram-code-row">
+                    <input type="text" name="telegram_code" placeholder="123456" inputmode="numeric" maxlength="6" required>
+                    <button type="submit" class="btn-telegram">Войти</button>
+                </div>
+            </form>
+
+            <p class="telegram-widget-note">
+                Для localhost используем код от бота. Официальный Telegram Login Widget можно включить позже на публичном домене через BotFather /setdomain.
+            </p>
+        </div>
 
         <div class="demo-box">
             <strong>Демо-аккаунты:</strong><br>

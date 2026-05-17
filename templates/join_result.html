@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Приглашение в команду</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/ninecell-mark.svg') }}">
+</head>
+<body class="auth-body">
+  <div class="auth-card join-card">
+    <div class="auth-logo-wrap"><img class="auth-logo" src="{{ url_for('static', filename='img/ninecell-logo.svg') }}" alt="NineCell"></div>
+    <h1>{{ 'Готово!' if ok else 'Не получилось' }}</h1>
+    <p class="muted">{{ message }}</p>
+    <a class="btn-link-primary" href="{{ url_for('index') }}">Перейти к доске</a>
+  </div>
+</body>
+</html>

@@ -1,20 +1,35 @@
+# Python
 .venv/
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
+# Environment / secrets
 .env
+
+# Local databases
 instance/
 *.db
 *.sqlite
 *.sqlite3
 
+# IDE / OS
 .idea/
 .vscode/
 .DS_Store
 
+# Local Docker volumes
 postgres_data/
 rabbitmq_data/
 redis_data/
 
+# Logs
 *.log
+
+# Test/cache
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/

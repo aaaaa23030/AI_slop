@@ -14,7 +14,6 @@ from app import (
     Task,
     TeamMember,
     app,
-    check_rules,
     db,
     emit_state,
     enrich_incoming_payload,
@@ -23,8 +22,10 @@ from app import (
     find_user,
     get_default_column,
     normalize_tags,
+    notify_assignment,
     parse_deadline,
     send_notification,
+    publish_task_event,
     socketio,
 )
 from rabbitmq_client import INCOMING_QUEUE, get_connection, setup_rabbitmq
@@ -134,11 +135,13 @@ def process_incoming_task(item: IncomingTask) -> None:
     item.processed_at = datetime.utcnow()
     item.error = ""
 
+    notify_assignment(task)
     log_system_event("task_created_from_queue", task.id, {"incoming_id": item.id, "source": item.source, "external_id": external_id})
 
-    # Automation rules are still executed as Python functions, but now they are triggered by a background worker event.
-    check_rules("incoming_task", task)
-    check_rules("task_created", task)
+    # Queue domain events for automation_worker.py. This keeps incoming task processing
+    # separated from automation rules and demonstrates an event-driven pipeline.
+    publish_task_event("incoming_task", task, {"incoming_id": item.id, "source": item.source})
+    publish_task_event("task_created", task, {"created_from": "incoming_queue"})
 
     send_notification(f'📥 Из RabbitMQ создана задача: "{task.title}"', "success")
 

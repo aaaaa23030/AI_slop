@@ -1,6 +1,10 @@
+.git
 .venv
+venv
 __pycache__
 *.pyc
+.env
 instance
-.git
-*.zip
+*.db
+.idea
+.vscode
