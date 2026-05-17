@@ -9,13 +9,15 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
-      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-ninecell}:${RABBITMQ_PASSWORD:-NCellRabbit-2026}@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
       INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
       TELEGRAM_BOT_USERNAME: "${TELEGRAM_BOT_USERNAME:-}"
       TELEGRAM_LOGIN_TTL_SECONDS: "${TELEGRAM_LOGIN_TTL_SECONDS:-600}"
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
+      DEMO_ADMIN_PASSWORD: "${DEMO_ADMIN_PASSWORD:-NineCellAdmin-2026}"
+      DEMO_USER_PASSWORD: "${DEMO_USER_PASSWORD:-NineCellUser-2026}"
     depends_on:
       - postgres
       - rabbitmq
@@ -30,7 +32,7 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
-      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-ninecell}:${RABBITMQ_PASSWORD:-NCellRabbit-2026}@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
       INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
@@ -49,7 +51,7 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
-      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-ninecell}:${RABBITMQ_PASSWORD:-NCellRabbit-2026}@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
       INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
@@ -68,7 +70,7 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-hackathon-dev-secret-change-me}"
       DATABASE_URL: "postgresql://kanban:kanban@postgres:5432/kanban"
-      RABBITMQ_URL: "amqp://kanban:kanban@rabbitmq:5672/"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-ninecell}:${RABBITMQ_PASSWORD:-NCellRabbit-2026}@rabbitmq:5672/"
       REDIS_URL: "redis://redis:6379/0"
       INCOMING_API_KEY: "${INCOMING_API_KEY:-dev-incoming-token}"
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:5000}"
@@ -111,8 +113,8 @@ services:
   rabbitmq:
     image: rabbitmq:4-management
     environment:
-      RABBITMQ_DEFAULT_USER: kanban
-      RABBITMQ_DEFAULT_PASS: kanban
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-ninecell}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-NCellRabbit-2026}"
     ports:
       - "5672:5672"
       - "15672:15672"

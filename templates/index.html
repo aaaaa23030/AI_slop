@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -266,142 +265,6 @@
                 width: 100%;
             }
         }
-
-
-        /* ================= TASK CARD HEADER FIX =================
-           Название задачи слева, 3 кнопки справа на той же линии,
-           приоритет — ниже кнопок. */
-        .card {
-            position: relative !important;
-            padding: 15px 16px 16px 16px !important;
-            border-radius: 22px !important;
-            overflow: hidden !important;
-        }
-
-        .card::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 5px;
-            background: #94a3b8;
-        }
-
-        .card.priority-low::before { background: var(--green, #16a34a); }
-        .card.priority-medium::before { background: var(--amber, #f59e0b); }
-        .card.priority-high::before { background: var(--red, #ef4444); }
-        .card.priority-critical::before { background: var(--purple, #8b5cf6); }
-
-        .card-header.task-card-header {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) auto !important;
-            align-items: start !important;
-            gap: 12px !important;
-            margin: 0 0 12px 0 !important;
-            padding: 0 !important;
-            min-height: 0 !important;
-        }
-
-        .task-title {
-            min-width: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            color: #0f172a !important;
-            font-size: 17px !important;
-            font-weight: 900 !important;
-            line-height: 1.25 !important;
-            overflow-wrap: anywhere !important;
-            word-break: break-word !important;
-        }
-
-        .task-card-side {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-end !important;
-            gap: 8px !important;
-            flex: 0 0 auto !important;
-        }
-
-        .task-card-side .card-actions {
-            position: static !important;
-            top: auto !important;
-            right: auto !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            gap: 8px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .task-card-side .card-actions button {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 14px !important;
-            background: #f1f5f9 !important;
-            color: #64748b !important;
-            display: inline-grid !important;
-            place-items: center !important;
-            box-shadow: none !important;
-        }
-
-        .task-card-side .card-actions button:hover {
-            background: #e0e7ff !important;
-            color: #1d4ed8 !important;
-            transform: translateY(-1px) !important;
-        }
-
-        .task-card-side .badge {
-            position: static !important;
-            top: auto !important;
-            right: auto !important;
-            margin: 0 !important;
-            width: fit-content !important;
-            min-height: 28px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 5px 12px !important;
-            border-radius: 999px !important;
-            font-size: 12px !important;
-            font-weight: 900 !important;
-            line-height: 1 !important;
-            white-space: nowrap !important;
-            color: #fff !important;
-        }
-
-        .task-card-side .badge-low { background: var(--green, #16a34a) !important; }
-        .task-card-side .badge-medium { background: var(--amber, #f59e0b) !important; }
-        .task-card-side .badge-high { background: var(--red, #ef4444) !important; }
-        .task-card-side .badge-critical { background: var(--purple, #8b5cf6) !important; }
-
-        .card-desc,
-        .tags,
-        .team-meta,
-        .deadline,
-        .card-meta {
-            padding-right: 0 !important;
-        }
-
-        @media (max-width: 620px) {
-            .card-header.task-card-header {
-                grid-template-columns: 1fr !important;
-            }
-
-            .task-card-side {
-                align-items: flex-start !important;
-            }
-
-            .task-card-side .card-actions {
-                justify-content: flex-start !important;
-            }
-        }
-
     </style>
 </head>
 <body>
@@ -483,7 +346,7 @@
             <footer class="site-footer">
                 <div>
                     <strong>NineCell</strong>
-                    <span>Мини-Jira/Trello для хакатона: real-time, RabbitMQ, automation, команды.</span>
+                    <span>Мини-Jira/Trello для командной работы: задачи, события, автоматизация и real-time.</span>
                 </div>
                 <button onclick="openTool('guide')">О сервисе и инструкция</button>
             </footer>
@@ -581,7 +444,7 @@
                             <button class="btn-purple compact" onclick="runPrimeDemo()">🚀 Demo Mode</button>
                         </div>
                     </div>
-                    <p class="muted">Панель для защиты и отладки: PostgreSQL, RabbitMQ, Redis, очереди, outbox и ошибки входящего потока.</p>
+                    <p class="muted">Админская панель состояния: PostgreSQL, RabbitMQ, Redis, очереди, outbox и ошибки входящего потока.</p>
                     <div id="healthPanel" class="health-grid"></div>
                     <div id="healthRecommendations" class="mini-list"></div>
                 </div>
@@ -675,12 +538,12 @@
                     <div class="flow-diagram">
                         <div>API / Telegram</div><span>→</span><div>PostgreSQL Outbox</div><span>→</span><div>RabbitMQ</div><span>→</span><div>Worker</div><span>→</span><div>Kanban + Socket.IO</div>
                     </div>
-                    <h4>Что показать жюри</h4>
+                    <h4>Ежедневный сценарий работы</h4>
                     <ul>
-                        <li>Откройте два браузера: admin и user. Создайте задачу — она появится у обоих без перезагрузки.</li>
-                        <li>Создайте invite-ссылку, войдите другим аккаунтом и вступите в команду.</li>
-                        <li>Отправьте входящую задачу в очередь и откройте RabbitMQ Queues and Streams.</li>
-                        <li>Создайте правило автоматизации и покажите, как оно меняет карточку.</li>
+                        <li>Откройте доску и выберите фильтр “Только мои”, чтобы увидеть личный фокус на день.</li>
+                        <li>Создавайте задачи через кнопку “＋”, назначайте команду и исполнителя.</li>
+                        <li>Перетаскивайте карточки между колонками — изменения сохраняются автоматически.</li>
+                        <li>Следите за уведомлениями: назначенные задачи видны в панели и могут приходить в Telegram.</li>
                     </ul>
                 </article>
             </section>
@@ -766,6 +629,25 @@
         </div>
     </div>
 
+
+
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-card confirm-card">
+            <div class="modal-header">
+                <div>
+                    <span class="drawer-kicker" id="confirmKicker">Подтверждение</span>
+                    <h3 id="confirmTitle">Подтвердить действие</h3>
+                </div>
+                <button class="icon-button" onclick="closeConfirmModal(false)">✕</button>
+            </div>
+            <p id="confirmMessage" class="confirm-message">Это действие нужно подтвердить.</p>
+            <div class="confirm-actions">
+                <button class="btn-secondary" id="confirmCancel" onclick="closeConfirmModal(false)">Отмена</button>
+                <button class="btn-danger" id="confirmOk" onclick="closeConfirmModal(true)">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
@@ -779,6 +661,28 @@
             high: "Высокий",
             critical: "Критический"
         };
+
+        let confirmResolver = null;
+
+        function askConfirm({ title = "Подтвердить действие", message = "Продолжить?", confirmText = "Подтвердить", cancelText = "Отмена", danger = true } = {}) {
+            return new Promise(resolve => {
+                confirmResolver = resolve;
+                document.getElementById("confirmTitle").innerText = title;
+                document.getElementById("confirmMessage").innerText = message;
+                document.getElementById("confirmOk").innerText = confirmText;
+                document.getElementById("confirmCancel").innerText = cancelText;
+                document.getElementById("confirmOk").className = danger ? "btn-danger" : "btn-primary";
+                document.getElementById("confirmModal").classList.remove("hidden");
+            });
+        }
+
+        function closeConfirmModal(result) {
+            document.getElementById("confirmModal")?.classList.add("hidden");
+            if (confirmResolver) {
+                confirmResolver(Boolean(result));
+                confirmResolver = null;
+            }
+        }
 
 
         function applyLayoutPreferences() {
@@ -941,7 +845,11 @@
                 return;
             }
 
-            const ok = confirm("Очистить все ваши уведомления?\n\nОни удалятся только у текущего аккаунта.");
+            const ok = await askConfirm({
+                title: "Очистить уведомления?",
+                message: "Уведомления будут удалены только у текущего аккаунта. Это не затронет задачи и уведомления других пользователей.",
+                confirmText: "Очистить"
+            });
             if (!ok) return;
 
             await api("/api/notifications/clear", "POST", {});
@@ -1050,13 +958,10 @@
             const assigneeHtml = task.assignee ? `<div class="team-meta">🙋 Исполнитель: ${escapeHtml(task.assignee)}</div>` : `<div class="team-meta muted-small">🙋 Не назначена</div>`;
 
             card.innerHTML = `
-                <div class="card-header task-card-header">
-                    <strong class="task-title">${escapeHtml(task.title)}</strong>
-
-                    <div class="task-card-side">
-                        ${editButtons}
-                        <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
-                    </div>
+                ${editButtons}
+                <div class="card-header">
+                    <strong>${escapeHtml(task.title)}</strong>
+                    <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
                 </div>
                 ${task.description ? `<p class="card-desc">${escapeHtml(task.description)}</p>` : ""}
                 ${tags ? `<div class="tags">${tags}</div>` : ""}
@@ -1100,7 +1005,12 @@
 
         async function deleteTask(taskId) {
             const task = state.tasks.find(t => t.id === taskId);
-            if (!confirm(`Удалить задачу "${task?.title || taskId}"?`)) return;
+            const ok = await askConfirm({
+                title: "Удалить задачу?",
+                message: `Задача «${task?.title || taskId}» будет удалена с доски. История события сохранится.`,
+                confirmText: "Удалить"
+            });
+            if (!ok) return;
             await api(`/delete_task/${taskId}`, "POST");
         }
 
@@ -1216,7 +1126,13 @@
         }
 
         async function retryIncoming(id) {
-            if (!confirm("Повторить обработку входящей задачи через RabbitMQ?")) return;
+            const ok = await askConfirm({
+                title: "Повторить обработку?",
+                message: "Входящая задача снова будет отправлена через outbox → RabbitMQ → worker.",
+                confirmText: "Retry",
+                danger: false
+            });
+            if (!ok) return;
             await api(`/api/incoming_tasks/${id}/retry`, "POST", {});
             showNotification("Задача снова отправлена в очередь", "success");
         }
@@ -1252,7 +1168,13 @@
 
         async function runPrimeDemo() {
             if (!IS_ADMIN) return;
-            if (!confirm("Создать Prime demo-данные: команду, задачи, правило и входящую задачу в RabbitMQ?")) return;
+            const ok = await askConfirm({
+                title: "Создать демо-данные?",
+                message: "Будут добавлены демонстрационная команда, задачи, правило автоматизации и входящая задача для очереди.",
+                confirmText: "Создать",
+                danger: false
+            });
+            if (!ok) return;
             await api("/api/demo/prime", "POST", {});
             openTool("health");
             await refreshHealth();
@@ -1595,7 +1517,12 @@
         }
 
         async function disableInvite(inviteId) {
-            if (!confirm("Отключить эту invite-ссылку? Новые пользователи уже не смогут по ней вступить.")) return;
+            const ok = await askConfirm({
+                title: "Отключить invite-ссылку?",
+                message: "Новые пользователи больше не смогут вступить в команду по этой ссылке.",
+                confirmText: "Отключить"
+            });
+            if (!ok) return;
             await api(`/disable_invite/${inviteId}`, "POST", {});
         }
 
@@ -1657,7 +1584,11 @@
         async function deleteTeam(id) {
             const team = getTeamById(id);
             const name = team?.name || "эту команду";
-            const ok = confirm(`Удалить команду «${name}»?\n\nЗадачи НЕ удалятся, но станут личными/без команды, а исполнители будут сняты.`);
+            const ok = await askConfirm({
+                title: "Удалить команду?",
+                message: `Команда «${name}» будет удалена. Задачи не удалятся, но станут личными/без команды, а исполнители будут сняты.`,
+                confirmText: "Удалить команду"
+            });
             if (!ok) return;
             await api(`/delete_team/${id}`, "POST", {});
         }
@@ -1679,7 +1610,12 @@
         }
 
         async function removeTeamMember(teamId, userId) {
-            if (!confirm("Удалить участника из команды? Его назначенные задачи в этой команде останутся без исполнителя.")) return;
+            const ok = await askConfirm({
+                title: "Удалить участника?",
+                message: "Пользователь будет удалён из команды. Назначенные ему задачи в этой команде останутся без исполнителя.",
+                confirmText: "Удалить"
+            });
+            if (!ok) return;
             await api(`/remove_team_member/${teamId}/${userId}`, "POST");
         }
 
@@ -1720,7 +1656,12 @@
         }
 
         async function deleteColumn(id) {
-            if (!confirm("Удалить колонку? Задачи из неё переедут в первую доступную колонку.")) return;
+            const ok = await askConfirm({
+                title: "Удалить колонку?",
+                message: "Колонка будет удалена. Задачи из неё переедут в первую доступную колонку.",
+                confirmText: "Удалить колонку"
+            });
+            if (!ok) return;
             await api(`/delete_column/${id}`, "POST");
         }
 
@@ -1769,7 +1710,12 @@
         }
 
         async function deleteRule(id) {
-            if (!confirm("Удалить правило?")) return;
+            const ok = await askConfirm({
+                title: "Удалить правило?",
+                message: "Правило автоматизации будет удалено и больше не будет срабатывать.",
+                confirmText: "Удалить правило"
+            });
+            if (!ok) return;
             await api(`/delete_rule/${id}`, "POST");
         }
 

@@ -51,6 +51,9 @@ login_manager.login_message = "Сначала войдите в систему."
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").strip().lstrip("@")
 TELEGRAM_LOGIN_TTL_SECONDS = int(os.environ.get("TELEGRAM_LOGIN_TTL_SECONDS", "600"))
+
+DEMO_ADMIN_PASSWORD = os.environ.get("DEMO_ADMIN_PASSWORD", "NineCellAdmin-2026")
+DEMO_USER_PASSWORD = os.environ.get("DEMO_USER_PASSWORD", "NineCellUser-2026")
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
 
 PRIORITIES = {"low", "medium", "high", "critical"}
@@ -271,23 +274,37 @@ def seed_database() -> None:
 
     if not User.query.filter_by(username="admin").first():
         admin = User(username="admin", email="admin@example.com", role="admin")
-        admin.set_password("admin123")
+        admin.set_password(DEMO_ADMIN_PASSWORD)
         db.session.add(admin)
 
     if not User.query.filter_by(username="user").first():
         user = User(username="user", email="user@example.com", role="user")
-        user.set_password("user123")
+        user.set_password(DEMO_USER_PASSWORD)
         db.session.add(user)
 
     db.session.flush()
 
     admin = User.query.filter_by(username="admin").first()
     user = User.query.filter_by(username="user").first()
+
+    # Если проект запускался раньше со слабыми демо-паролями admin123/user123,
+    # автоматически заменяем их на менее распространённые демо-пароли.
+    # Это уменьшает вероятность предупреждений браузера о скомпрометированных паролях.
+    changed_demo_passwords = False
+    if admin and admin.check_password("admin123"):
+        admin.set_password(DEMO_ADMIN_PASSWORD)
+        changed_demo_passwords = True
+    if user and user.check_password("user123"):
+        user.set_password(DEMO_USER_PASSWORD)
+        changed_demo_passwords = True
+    if changed_demo_passwords:
+        print("[Security] Demo passwords were upgraded from admin123/user123.")
+
     if admin and not Team.query.filter_by(key="victory_group").first():
         team = Team(
             key="victory_group",
             name="Victory Group",
-            description="Демо-команда для хакатона",
+            description="Демо-команда для знакомства с сервисом",
             created_by=admin.id,
         )
         db.session.add(team)
@@ -955,7 +972,7 @@ def get_status_counts(model, status_column: str = "status") -> dict[str, int]:
 
 def get_rabbitmq_queue_stats() -> dict[str, Any]:
     """Read RabbitMQ queue depths without mutating messages."""
-    rabbitmq_url = os.environ.get("RABBITMQ_URL", "amqp://kanban:kanban@localhost:5672/")
+    rabbitmq_url = os.environ.get("RABBITMQ_URL", "amqp://ninecell:NCellRabbit-2026@localhost:5672/")
     queue_names = [
         "incoming_tasks",
         "incoming_tasks_dead",
@@ -1061,7 +1078,7 @@ def ensure_prime_demo_data() -> dict[str, Any]:
         team = Team(
             key="prime_demo_squad",
             name="Prime Demo Squad",
-            description="Демо-команда для защиты: задачи, очередь, автоматизация, Telegram.",
+            description="Демо-команда для знакомства с системой: задачи, очередь, автоматизация, Telegram.",
             created_by=admin.id if admin else None,
         )
         db.session.add(team)
@@ -1074,7 +1091,7 @@ def ensure_prime_demo_data() -> dict[str, Any]:
 
     task_specs = [
         {
-            "title": "Подготовить демо-сценарий для жюри",
+            "title": "Подготовить демонстрационный сценарий",
             "description": "Показать real-time, очередь, команды и автоматизацию за 3 минуты.",
             "priority": "high",
             "tags": "demo, pitch, hackathon",
@@ -1137,7 +1154,7 @@ def ensure_prime_demo_data() -> dict[str, Any]:
             created_by=admin.id if admin else None,
         ))
 
-    # Queue one fresh incoming task so the jury can see RabbitMQ pipeline moving.
+    # Queue one fresh incoming task to demonstrate RabbitMQ pipeline.
     external_id = f"prime-demo-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
     incoming_payload = {
         "source": "prime_demo",

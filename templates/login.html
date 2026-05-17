@@ -22,7 +22,7 @@
             <input type="text" name="username" placeholder="admin" required>
 
             <label>Пароль</label>
-            <input type="password" name="password" placeholder="admin123" required>
+            <input type="password" name="password" placeholder="NineCellAdmin-2026" required>
 
             <button type="submit" class="btn-primary full">Войти</button>
         </form>
@@ -32,7 +32,7 @@
 
         <div class="telegram-auth-box">
             <h3>Вход через Telegram</h3>
-            <p class="muted">Локальный способ для хакатона: напишите боту <code>/login</code>, получите 6-значный код и вставьте его здесь.</p>
+            <p class="muted">Локальный способ входа: напишите боту <code>/login</code>, получите 6-значный код и вставьте его здесь.</p>
             {% if telegram_bot_username %}
                 <a class="btn-telegram full" href="https://t.me/{{ telegram_bot_username }}" target="_blank" rel="noopener">Открыть @{{ telegram_bot_username }}</a>
             {% else %}
@@ -53,8 +53,8 @@
 
         <div class="demo-box">
             <strong>Демо-аккаунты:</strong><br>
-            Админ: <code>admin</code> / <code>admin123</code><br>
-            Пользователь: <code>user</code> / <code>user123</code>
+            Админ: <code>admin</code> / <code>NineCellAdmin-2026</code><br>
+            Пользователь: <code>user</code> / <code>NineCellUser-2026</code>
         </div>
 
         <p class="auth-link">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>

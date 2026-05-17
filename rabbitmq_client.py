@@ -7,7 +7,7 @@ from typing import Any
 
 import pika
 
-RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://kanban:kanban@localhost:5672/")
+RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://ninecell:NCellRabbit-2026@localhost:5672/")
 EXCHANGE = "kanban"
 INCOMING_QUEUE = "incoming_tasks"
 INCOMING_DEAD_QUEUE = "incoming_tasks_dead"

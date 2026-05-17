@@ -5,7 +5,7 @@
       <stop offset="1" stop-color="#6d5dfc"/>
     </linearGradient>
   </defs>
-  <rect width="560" height="140" rx="30" fill="none"/>
+  <rect width="560" height="140" rx="30" fill="#ffffff"/>
   <g transform="translate(18 18)">
     <rect x="0" y="0" width="28" height="28" rx="8" fill="#06164d"/>
     <rect x="36" y="0" width="28" height="28" rx="8" fill="#06164d"/>
@@ -18,5 +18,6 @@
     <rect x="72" y="72" width="28" height="28" rx="8" fill="#06164d"/>
     <path d="M43 50.5l7.5 7.5 16-19" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="145" y="90" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="-3" fill="#06164d">NineCell</text>
+  <text x="145" y="78" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="60" font-weight="850" letter-spacing="-3" fill="#06164d">NineCell</text>
+  <text x="149" y="111" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="650" letter-spacing=".2" fill="#64748b">Задачи, события и команды — в одном ритме</text>
 </svg>
