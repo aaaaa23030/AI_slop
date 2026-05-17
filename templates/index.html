@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -265,6 +266,141 @@
                 width: 100%;
             }
         }
+
+
+        /* ================= TASK CARD HEADER FIX =================
+           Название задачи слева, 3 кнопки справа на той же строке,
+           приоритет ниже кнопок. Важно: название — это task.title. */
+        .card {
+            position: relative !important;
+            padding: 14px 16px 16px 16px !important;
+            overflow: hidden !important;
+        }
+
+        .card .task-card-header {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            align-items: start !important;
+            gap: 12px !important;
+            margin: 0 0 12px 0 !important;
+            padding: 0 !important;
+            padding-right: 0 !important;
+            min-height: 0 !important;
+        }
+
+        .card .task-title {
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 17px !important;
+            line-height: 1.25 !important;
+            font-weight: 900 !important;
+            color: #0f172a !important;
+            word-break: break-word !important;
+        }
+
+        .card .task-card-side {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+            min-width: max-content !important;
+        }
+
+        .card .task-card-side .card-actions {
+            position: static !important;
+            top: auto !important;
+            right: auto !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 2 !important;
+        }
+
+        .card .task-card-side .card-actions button {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 14px !important;
+            background: #f1f5f9 !important;
+            color: #64748b !important;
+            display: inline-grid !important;
+            place-items: center !important;
+            cursor: pointer !important;
+            box-shadow: none !important;
+        }
+
+        .card .task-card-side .card-actions button:hover {
+            background: #e0e7ff !important;
+            color: #1d4ed8 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .card .task-card-side .task-priority-badge {
+            position: static !important;
+            top: auto !important;
+            right: auto !important;
+            margin: 0 !important;
+            width: fit-content !important;
+            min-height: 28px !important;
+            padding: 5px 12px !important;
+            border-radius: 999px !important;
+            font-size: 12px !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            z-index: 1 !important;
+        }
+
+        .card .task-priority-badge.badge-low {
+            background: #16a34a !important;
+            color: #fff !important;
+        }
+
+        .card .task-priority-badge.badge-medium {
+            background: #f59e0b !important;
+            color: #fff !important;
+        }
+
+        .card .task-priority-badge.badge-high {
+            background: #ef4444 !important;
+            color: #fff !important;
+        }
+
+        .card .task-priority-badge.badge-critical {
+            background: #8b5cf6 !important;
+            color: #fff !important;
+        }
+
+        .card .card-desc,
+        .card .tags,
+        .card .team-meta,
+        .card .deadline,
+        .card .card-meta {
+            padding-right: 0 !important;
+        }
+
+        @media (max-width: 620px) {
+            .card .task-card-header {
+                grid-template-columns: 1fr !important;
+            }
+
+            .card .task-card-side {
+                align-items: flex-start !important;
+            }
+
+            .card .task-card-side .card-actions {
+                justify-content: flex-start !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -948,7 +1084,7 @@
                 : "";
 
             const editButtons = task.can_edit ? `
-                <div class="card-actions">
+                <div class="card-actions task-actions">
                     <button onclick="openActivity(${task.id})" title="История">🧾</button>
                     <button onclick="openEditModal(${task.id})" title="Редактировать">✏️</button>
                     <button onclick="deleteTask(${task.id})" title="Удалить">🗑️</button>
@@ -958,10 +1094,12 @@
             const assigneeHtml = task.assignee ? `<div class="team-meta">🙋 Исполнитель: ${escapeHtml(task.assignee)}</div>` : `<div class="team-meta muted-small">🙋 Не назначена</div>`;
 
             card.innerHTML = `
-                ${editButtons}
-                <div class="card-header">
-                    <strong>${escapeHtml(task.title)}</strong>
-                    <span class="badge badge-${task.priority}">${priorityNames[task.priority] || task.priority}</span>
+                <div class="card-header task-card-header">
+                    <strong class="task-title">${escapeHtml(task.title)}</strong>
+                    <div class="task-card-side">
+                        ${editButtons}
+                        <span class="badge badge-${task.priority} task-priority-badge">${priorityNames[task.priority] || task.priority}</span>
+                    </div>
                 </div>
                 ${task.description ? `<p class="card-desc">${escapeHtml(task.description)}</p>` : ""}
                 ${tags ? `<div class="tags">${tags}</div>` : ""}

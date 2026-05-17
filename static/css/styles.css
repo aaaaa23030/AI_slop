@@ -1347,3 +1347,159 @@ body.drawer-open .fab { right: calc(var(--drawer) + 40px); }
         width: 100%;
     }
 }
+/* ================= TASK CARD HEADER: TITLE + ACTIONS + PRIORITY ================= */
+
+.task-card,
+.card {
+    position: relative !important;
+    padding: 14px 16px 16px 16px !important;
+    overflow: hidden !important;
+}
+
+/* верх карточки: название слева, справа кнопки + ниже важность */
+.task-card-header,
+.card-header,
+.task-header,
+.task-top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 12px !important;
+    margin: 0 0 12px 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+}
+
+/* название задачи: это твое "цц" */
+.task-title,
+.card-title,
+.task-card-title,
+.card-header > strong,
+.card h4,
+.task-card h4 {
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    word-break: break-word !important;
+}
+
+/* правая колонка: кнопки сверху, важность ниже */
+.task-card-side {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
+    flex: 0 0 auto !important;
+}
+
+/* кнопки больше не absolute */
+.task-card-side .task-actions,
+.task-card-side .card-actions,
+.task-card-side .task-card-actions,
+.task-card-side .card-buttons,
+.task-card-side .task-buttons {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* сами кнопки */
+.task-card-side .task-actions button,
+.task-card-side .card-actions button,
+.task-card-side .task-card-actions button,
+.task-card-side .card-buttons button,
+.task-card-side .task-buttons button {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    display: inline-grid !important;
+    place-items: center !important;
+}
+
+/* важность стоит под кнопками, не налезает на название */
+.task-card-side .badge,
+.task-card-side .priority-badge,
+.task-card-side .task-priority,
+.task-card-side .badge-low,
+.task-card-side .badge-medium,
+.task-card-side .badge-high,
+.task-card-side .badge-critical {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    margin: 0 !important;
+    width: fit-content !important;
+    white-space: nowrap !important;
+}
+
+/* убираем старый отступ справа, он больше не нужен */
+.task-card-content,
+.card-content,
+.task-body,
+.card-body,
+.task-description,
+.card-desc,
+.task-meta,
+.card-meta,
+.task-tags,
+.card-tags,
+.task-badges,
+.card-badges {
+    padding-right: 0 !important;
+}
+
+/* цвета важности */
+.badge-low {
+    background: #16a34a !important;
+    color: #fff !important;
+}
+
+.badge-medium {
+    background: #f59e0b !important;
+    color: #fff !important;
+}
+
+.badge-high {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+.badge-critical {
+    background: #8b5cf6 !important;
+    color: #fff !important;
+}
+
+/* мобильная версия */
+@media (max-width: 620px) {
+    .task-card-header,
+    .card-header,
+    .task-header,
+    .task-top {
+        grid-template-columns: 1fr !important;
+    }
+
+    .task-card-side {
+        align-items: flex-start !important;
+    }
+
+    .task-card-side .task-actions,
+    .task-card-side .card-actions {
+        justify-content: flex-start !important;
+    }
+}
